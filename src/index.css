@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/* ── CSS Variables — Xenova Color System ── */
+:root {
+  --void-black: #050810;
+  --dark-bio-navy: #080f1a;
+  --bioluminescent-teal: #00FFD1;
+  --genetic-amber: #FFB347;
+  --cascade-red: #FF3A3A;
+  --pale-starlight: #E8F4F8;
+  --muted-cyan: #7AAFC4;
+  --xenova-green: #39FF14;
+}
+
+/* ── Base Reset ── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--void-black);
+  color: var(--pale-starlight);
+  font-family: 'Courier New', monospace;
+  overflow-x: hidden;
+}
+
+/* ── Glow Utilities ── */
+.glow-teal {
+  text-shadow: 0 0 10px var(--bioluminescent-teal),
+               0 0 20px var(--bioluminescent-teal),
+               0 0 40px var(--bioluminescent-teal);
+}
+
+.glow-green {
+  text-shadow: 0 0 10px var(--xenova-green),
+               0 0 20px var(--xenova-green);
+}
+
+.glow-amber {
+  text-shadow: 0 0 10px var(--genetic-amber),
+               0 0 20px var(--genetic-amber);
+}
+
+/* ── Scrollbar Styling ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--void-black);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bioluminescent-teal);
+  border-radius: 3px;
+}
