@@ -1,11 +1,11 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import EntryGate from './pages/EntryGate'
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Pages will go here one by one */}
-        <Route path="/" element={<div style={{color: '#00FFD1', padding: '2rem'}}>Xenova Archive — Online</div>} />
+        <Route path="/" element={<EntryGate />} />
       </Routes>
     </Router>
   )

@@ -58,3 +58,209 @@ body {
   background: var(--bioluminescent-teal);
   border-radius: 3px;
 }
+
+
+/* ════════════════════════════════
+   ENTRY GATE
+════════════════════════════════ */
+
+.entry-gate {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: var(--void-black);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* ── Star Background ── */
+.stars-bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, #ffffff33, transparent),
+    radial-gradient(1px 1px at 60% 70%, #00FFD122, transparent),
+    radial-gradient(1px 1px at 80% 20%, #ffffff22, transparent),
+    radial-gradient(2px 2px at 40% 80%, #00FFD133, transparent),
+    radial-gradient(1px 1px at 10% 60%, #ffffff33, transparent);
+  background-size: 400px 400px, 300px 300px, 500px 500px, 350px 350px, 450px 450px;
+  animation: stars-drift 40s linear infinite;
+}
+
+@keyframes stars-drift {
+  from { background-position: 0 0, 0 0, 0 0, 0 0, 0 0; }
+  to   { background-position: 400px 400px, -300px 300px, 200px -200px, -350px 350px, 150px -150px; }
+}
+
+/* ── Helix ── */
+.helix-container {
+  position: absolute;
+  width: 4px;
+  height: 300px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0.3;
+  transition: opacity 1s ease;
+}
+
+.helix-assembled {
+  opacity: 0.5;
+}
+
+.helix-node {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bioluminescent-teal);
+  box-shadow: 0 0 10px var(--bioluminescent-teal), 0 0 20px var(--bioluminescent-teal);
+  top: calc(var(--i) * 25px);
+  left: calc(sin(var(--i) * 0.8) * 40px);
+  animation: helix-pulse 2s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.1s);
+}
+
+@keyframes helix-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.4); opacity: 0.6; }
+}
+
+/* ── Content ── */
+.entry-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.fade-in {
+  animation: fadeIn 1s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Classification Text ── */
+.classification-text {
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  color: var(--muted-cyan);
+  opacity: 0;
+}
+
+/* ── Title ── */
+.xenova-title {
+  font-size: clamp(4rem, 12vw, 9rem);
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: var(--pale-starlight);
+  line-height: 1;
+  opacity: 0;
+}
+
+.title-reveal {
+  animation: titleReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes titleReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+    filter: blur(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
+}
+
+.title-sub {
+  display: block;
+  font-size: 0.35em;
+  letter-spacing: 0.6em;
+  color: var(--bioluminescent-teal);
+  text-shadow: 0 0 20px var(--bioluminescent-teal);
+}
+
+/* ── Subtitle ── */
+.entry-subtitle {
+  font-size: 1rem;
+  color: var(--muted-cyan);
+  letter-spacing: 0.1em;
+  opacity: 0;
+  max-width: 500px;
+}
+
+/* ── Enter Button ── */
+.enter-btn {
+  position: relative;
+  margin-top: 1rem;
+  padding: 1rem 3rem;
+  background: transparent;
+  border: 1px solid var(--bioluminescent-teal);
+  color: var(--bioluminescent-teal);
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  letter-spacing: 0.3em;
+  cursor: pointer;
+  overflow: hidden;
+  animation: fadeIn 0.8s ease forwards;
+  transition: color 0.3s ease;
+}
+
+.enter-btn:hover {
+  color: var(--void-black);
+}
+
+.enter-btn:hover .btn-glow {
+  transform: translateX(0);
+}
+
+.btn-glow {
+  position: absolute;
+  inset: 0;
+  background: var(--bioluminescent-teal);
+  transform: translateX(-101%);
+  transition: transform 0.3s ease;
+  z-index: -1;
+}
+
+/* ── Status Bar ── */
+.status-bar {
+  position: absolute;
+  bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: var(--muted-cyan);
+  opacity: 0;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--xenova-green);
+  box-shadow: 0 0 8px var(--xenova-green);
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+
+.status-divider {
+  color: var(--bioluminescent-teal);
+}
