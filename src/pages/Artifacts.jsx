@@ -110,7 +110,7 @@ function useNebulaCanvas(artifact) {
       const hh = hexSize * Math.sqrt(3)
       ctx.strokeStyle = `rgb(${r},${g},${b})`
       ctx.lineWidth = 0.5
-      for (let col = -1; col < w / hexSize + 1; col++) {
+      for (let col = -1; col < w / (hexSize * 1.5) + 2; col++) {
         for (let row = -1; row < h / hh + 1; row++) {
           const cx = col * hexSize * 1.5
           const cy = row * hh + (col % 2) * hh * 0.5
@@ -1090,6 +1090,27 @@ export default function ArtifactsVault() {
   const [showLore, setShowLore] = useState(false)
   const navigate = useNavigate()
 
+  // Force html/body to have no overflow while on this page
+  // This prevents any scrollbar or scrollbar-gutter from creating a gap
+  useEffect(() => {
+    const html = document.documentElement
+    const body = document.body
+    const prevHtmlOverflow = html.style.overflow
+    const prevBodyOverflow = body.style.overflow
+    const prevHtmlSG = html.style.scrollbarGutter
+    const prevBodySG = body.style.scrollbarGutter
+    html.style.overflow = 'hidden'
+    body.style.overflow = 'hidden'
+    html.style.scrollbarGutter = 'auto'
+    body.style.scrollbarGutter = 'auto'
+    return () => {
+      html.style.overflow = prevHtmlOverflow
+      body.style.overflow = prevBodyOverflow
+      html.style.scrollbarGutter = prevHtmlSG
+      body.style.scrollbarGutter = prevBodySG
+    }
+  }, [])
+
   const goTo = useCallback((next) => {
     if (transitioning) return
     const nextIdx = ((next % artifacts.length) + artifacts.length) % artifacts.length
@@ -1118,7 +1139,7 @@ export default function ArtifactsVault() {
   const artifact = artifacts[current]
 
   return (
-    <div style={{ backgroundColor: '#050810', width: '100vw', height: '100vh', overflow: 'hidden', cursor: 'none', position: 'relative' }}>
+    <div style={{ backgroundColor: '#050810', overflow: 'hidden', cursor: 'none', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}>
       <CustomCursor />
 
       <AnimatePresence custom={direction} mode="wait">
