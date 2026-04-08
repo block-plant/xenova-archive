@@ -1039,9 +1039,9 @@ export default function Timeline() {
               color: "#7AAFC4",
             }}
           >
-            SCROLL TO TRAVERSE
+
           </div>
-          <div style={{ color: "#00FFD1", fontSize: 16 }}>↓</div>
+          <div style={{ color: "#00FFD1", fontSize: 16 }}></div>
         </div>
       </div>
 

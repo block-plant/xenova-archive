@@ -1,1212 +1,1214 @@
-// src/pages/Artifacts.jsx — VOID CHAMBERS v3: BEAST MODE
-// Dependencies: three, @react-three/fiber, @react-three/drei, framer-motion, react-router-dom
-
-import { useState, useEffect, useRef, useCallback, Suspense, useMemo } from "react"
-import { useNavigate } from "react-router-dom"
-import { motion, AnimatePresence, useMotionValue, useSpring } from "framer-motion"
-import { Canvas, useFrame, useThree } from "@react-three/fiber"
-import { OrbitControls, Stars, PerspectiveCamera, Trail, Sphere, MeshDistortMaterial } from "@react-three/drei"
-import * as THREE from "three"
-import { artifacts } from "../data/artifacts"
-
-// ── UTILITY ───────────────────────────────────────────────────
-function rgba(hex, a) {
-  if (!hex || hex.length < 7) return `rgba(0,255,209,${a})`
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return `rgba(${r},${g},${b},${a})`
-}
-
-function hexToVec3(hex) {
-  const r = parseInt(hex.slice(1, 3), 16) / 255
-  const g = parseInt(hex.slice(3, 5), 16) / 255
-  const b = parseInt(hex.slice(5, 7), 16) / 255
-  return new THREE.Color(r, g, b)
-}
-
-// ── NEBULA BACKGROUND CANVAS (full-screen alien atmosphere) ───
-function useNebulaCanvas(artifact) {
-  const canvasRef = useRef()
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    let raf
-    const start = Date.now()
-    const color = artifact.glowColor
-    const r = parseInt(color.slice(1, 3), 16)
-    const g = parseInt(color.slice(3, 5), 16)
-    const b = parseInt(color.slice(5, 7), 16)
-
-    const resize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-    }
-    resize()
-    window.addEventListener('resize', resize)
-
-    // Pre-generate star field
-    const stars = Array.from({ length: 280 }, () => ({
-      x: Math.random(),
-      y: Math.random(),
-      r: Math.random() * 1.3,
-      twinkle: Math.random() * Math.PI * 2,
-      speed: 0.4 + Math.random() * 1.2,
-    }))
-
-    // Pre-generate dust particles
-    const dust = Array.from({ length: 120 }, () => ({
-      x: Math.random(),
-      y: Math.random(),
-      r: 1 + Math.random() * 3,
-      phase: Math.random() * Math.PI * 2,
-      drift: (Math.random() - 0.5) * 0.00015,
-      driftY: (Math.random() - 0.5) * 0.00008,
-    }))
-
-    const loop = () => {
-      const t = (Date.now() - start) / 1000
-      const w = canvas.width, h = canvas.height
-
-      // Clear with deep space
-      ctx.fillStyle = '#050810'
-      ctx.fillRect(0, 0, w, h)
-
-      // === NEBULA CLOUDS ===
-      // Central nebula bloom
-      const grad1 = ctx.createRadialGradient(w * 0.5, h * 0.45, 0, w * 0.5, h * 0.45, w * 0.55)
-      grad1.addColorStop(0, `rgba(${r},${g},${b},0.045)`)
-      grad1.addColorStop(0.4, `rgba(${r},${g},${b},0.018)`)
-      grad1.addColorStop(1, 'transparent')
-      ctx.fillStyle = grad1
-      ctx.fillRect(0, 0, w, h)
-
-      // Left nebula arm
-      const grad2 = ctx.createRadialGradient(w * 0.15, h * 0.35 + Math.sin(t * 0.08) * h * 0.04, 0, w * 0.15, h * 0.35, w * 0.38)
-      grad2.addColorStop(0, `rgba(${Math.floor(r * 0.4)},${Math.floor(g * 0.6)},${Math.floor(b * 1.0)},0.055)`)
-      grad2.addColorStop(1, 'transparent')
-      ctx.fillStyle = grad2
-      ctx.fillRect(0, 0, w, h)
-
-      // Right nebula arm
-      const grad3 = ctx.createRadialGradient(w * 0.85, h * 0.55 + Math.cos(t * 0.06) * h * 0.03, 0, w * 0.85, h * 0.55, w * 0.42)
-      grad3.addColorStop(0, `rgba(${Math.floor(r * 0.8)},${Math.floor(g * 0.3)},${Math.floor(b * 0.5)},0.04)`)
-      grad3.addColorStop(1, 'transparent')
-      ctx.fillStyle = grad3
-      ctx.fillRect(0, 0, w, h)
-
-      // Top nebula streak
-      const grad4 = ctx.createRadialGradient(w * 0.6, h * 0.08, 0, w * 0.6, h * 0.08, w * 0.3)
-      grad4.addColorStop(0, `rgba(${r},${g},${b},0.03)`)
-      grad4.addColorStop(1, 'transparent')
-      ctx.fillStyle = grad4
-      ctx.fillRect(0, 0, w, h)
-
-      // === HEX GRID OVERLAY (alien tech) ===
-      ctx.save()
-      ctx.globalAlpha = 0.025 + Math.sin(t * 0.3) * 0.008
-      const hexSize = 52
-      const hh = hexSize * Math.sqrt(3)
-      ctx.strokeStyle = `rgb(${r},${g},${b})`
-      ctx.lineWidth = 0.5
-      for (let col = -1; col < w / (hexSize * 1.5) + 2; col++) {
-        for (let row = -1; row < h / hh + 1; row++) {
-          const cx = col * hexSize * 1.5
-          const cy = row * hh + (col % 2) * hh * 0.5
-          ctx.beginPath()
-          for (let k = 0; k < 6; k++) {
-            const angle = (Math.PI / 3) * k - Math.PI / 6
-            const px = cx + hexSize * 0.5 * Math.cos(angle)
-            const py = cy + hexSize * 0.5 * Math.sin(angle)
-            if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py)
-          }
-          ctx.closePath()
-          ctx.stroke()
-        }
-      }
-      ctx.restore()
-
-      // === ALIEN RUNE SYMBOLS (faint, scattered) ===
-      ctx.save()
-      ctx.font = '11px monospace'
-      const runes = ['Ξ', 'Ω', 'Λ', 'Σ', 'Φ', 'Ψ', '∞', '⟁', '⊗', '⊕', '⟴', '↯']
-      for (let i = 0; i < 18; i++) {
-        const bx = ((i * 137.508) % 1) * w
-        const by = ((i * 91.3) % 1) * h
-        const drift = Math.sin(t * 0.12 + i * 0.7) * 18
-        const alpha = 0.04 + Math.sin(t * 0.4 + i) * 0.02
-        ctx.fillStyle = `rgba(${r},${g},${b},${Math.max(0, alpha)})`
-        ctx.fillText(runes[i % runes.length], bx + drift, by)
-      }
-      ctx.restore()
-
-      // === STARS ===
-      for (const s of stars) {
-        const alpha = 0.4 + Math.sin(t * s.speed + s.twinkle) * 0.35
-        ctx.fillStyle = `rgba(232,244,248,${Math.max(0, alpha)})`
-        ctx.beginPath()
-        ctx.arc(s.x * w, s.y * h, s.r, 0, Math.PI * 2)
-        ctx.fill()
-      }
-
-      // === COSMIC DUST ===
-      for (const d of dust) {
-        d.x += d.drift
-        d.y += d.driftY
-        if (d.x < 0) d.x = 1; if (d.x > 1) d.x = 0
-        if (d.y < 0) d.y = 1; if (d.y > 1) d.y = 0
-        const alpha = (0.06 + Math.sin(t * 0.5 + d.phase) * 0.04)
-        ctx.fillStyle = `rgba(${r},${g},${b},${Math.max(0, alpha)})`
-        ctx.beginPath()
-        ctx.arc(d.x * w, d.y * h, d.r, 0, Math.PI * 2)
-        ctx.fill()
-      }
-
-      // === SCAN LINE (subtle) ===
-      const scanY = ((t * 0.08) % 1) * h
-      const scanGrad = ctx.createLinearGradient(0, scanY - 60, 0, scanY + 60)
-      scanGrad.addColorStop(0, 'transparent')
-      scanGrad.addColorStop(0.5, `rgba(${r},${g},${b},0.015)`)
-      scanGrad.addColorStop(1, 'transparent')
-      ctx.fillStyle = scanGrad
-      ctx.fillRect(0, scanY - 60, w, 120)
-
-      raf = requestAnimationFrame(loop)
-    }
-    loop()
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize) }
-  }, [artifact])
-  return canvasRef
-}
-
-// ── UNIQUE 3D ARTIFACT MESHES ─────────────────────────────────
-
-// 0: Seed Lattice — actual DNA double helix
-function SeedLattice({ color }) {
-  const group = useRef()
-  const strand1 = useRef()
-  const strand2 = useRef()
-
-  const helixPoints1 = useMemo(() => {
-    const pts = []
-    for (let i = 0; i <= 120; i++) {
-      const t = (i / 120) * Math.PI * 6 - Math.PI * 3
-      pts.push(new THREE.Vector3(Math.cos(t) * 0.7, t * 0.22, Math.sin(t) * 0.7))
-    }
-    return pts
-  }, [])
-
-  const helixPoints2 = useMemo(() => {
-    const pts = []
-    for (let i = 0; i <= 120; i++) {
-      const t = (i / 120) * Math.PI * 6 - Math.PI * 3
-      pts.push(new THREE.Vector3(Math.cos(t + Math.PI) * 0.7, t * 0.22, Math.sin(t + Math.PI) * 0.7))
-    }
-    return pts
-  }, [])
-
-  const curve1 = useMemo(() => new THREE.CatmullRomCurve3(helixPoints1), [helixPoints1])
-  const curve2 = useMemo(() => new THREE.CatmullRomCurve3(helixPoints2), [helixPoints2])
-
-  const tubeGeo1 = useMemo(() => new THREE.TubeGeometry(curve1, 200, 0.045, 8, false), [curve1])
-  const tubeGeo2 = useMemo(() => new THREE.TubeGeometry(curve2, 200, 0.045, 8, false), [curve2])
-
-  // Rungs between strands
-  const rungs = useMemo(() => {
-    const r = []
-    for (let i = 0; i < 18; i++) {
-      const t = (i / 18) * Math.PI * 6 - Math.PI * 3
-      const y = t * 0.22
-      r.push({ y, t })
-    }
-    return r
-  }, [])
-
-  const c = hexToVec3(color)
-
-  useFrame(({ clock }) => {
-    const elapsed = clock.getElapsedTime()
-    group.current.rotation.y = elapsed * 0.35
-    group.current.position.y = Math.sin(elapsed * 0.5) * 0.18
-  })
-
-  return (
-    <group ref={group} position={[0, 0, 0]}>
-      <mesh geometry={tubeGeo1} ref={strand1}>
-        <meshStandardMaterial color={new THREE.Color(c.r, c.g, c.b)} emissive={new THREE.Color(c.r, c.g, c.b)} emissiveIntensity={1.2} metalness={0.6} roughness={0.2} />
-      </mesh>
-      <mesh geometry={tubeGeo2} ref={strand2}>
-        <meshStandardMaterial color={new THREE.Color(c.r * 0.5, c.g * 0.8, c.b)} emissive={new THREE.Color(c.r * 0.5, c.g * 0.8, c.b)} emissiveIntensity={1.0} metalness={0.6} roughness={0.2} />
-      </mesh>
-      {rungs.map((rung, i) => (
-        <mesh key={i} position={[0, rung.y, 0]} rotation={[0, rung.t, 0]}>
-          <cylinderGeometry args={[0.018, 0.018, 1.38, 6]} />
-          <meshStandardMaterial color={new THREE.Color(c.r, c.g, c.b)} emissive={new THREE.Color(c.r, c.g, c.b)} emissiveIntensity={0.7} transparent opacity={0.7} />
-        </mesh>
-      ))}
-    </group>
-  )
-}
-
-// 1: Codex Fragment — shattered multi-shard
-function CodexFragment({ color }) {
-  const group = useRef()
-  const c = hexToVec3(color)
-
-  const shards = useMemo(() => {
-    const s = []
-    for (let i = 0; i < 7; i++) {
-      s.push({
-        pos: [
-          (Math.random() - 0.5) * 0.6,
-          (Math.random() - 0.5) * 0.6,
-          (Math.random() - 0.5) * 0.6,
-        ],
-        rot: [Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI],
-        scale: 0.4 + Math.random() * 0.5,
-      })
-    }
-    return s
-  }, [])
-
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime()
-    group.current.rotation.y = t * 0.22
-    group.current.rotation.x = Math.sin(t * 0.15) * 0.3
-    group.current.position.y = Math.sin(t * 0.4) * 0.14
-  })
-
-  return (
-    <group ref={group}>
-      {/* Central core */}
-      <mesh>
-        <octahedronGeometry args={[0.85, 0]} />
-        <meshStandardMaterial color={new THREE.Color(c.r * 0.1, c.g * 0.1, c.b * 0.1)} emissive={new THREE.Color(c.r, c.g, c.b)} emissiveIntensity={1.1} metalness={0.9} roughness={0.05} transparent opacity={0.9} />
-      </mesh>
-      {/* Wireframe shell */}
-      <mesh scale={1.03}>
-        <octahedronGeometry args={[0.85, 0]} />
-        <meshBasicMaterial color={new THREE.Color(c.r, c.g, c.b)} wireframe transparent opacity={0.4} />
-      </mesh>
-      {/* Orbiting shards */}
-      {shards.map((s, i) => (
-        <mesh key={i} position={s.pos} rotation={s.rot} scale={s.scale}>
-          <tetrahedronGeometry args={[0.35, 0]} />
-          <meshStandardMaterial color={new THREE.Color(c.r * 0.2, c.g * 0.2, c.b * 0.2)} emissive={new THREE.Color(c.r, c.g, c.b)} emissiveIntensity={0.6} metalness={0.8} roughness={0.1} transparent opacity={0.75} />
-        </mesh>
-      ))}
-      {/* Energy cracks (lines) */}
-      {[0, 1, 2].map(i => (
-        <mesh key={`crack-${i}`} rotation={[0, (i / 3) * Math.PI * 2, Math.PI / 4]}>
-          <torusGeometry args={[1.05, 0.008, 4, 40, Math.PI * 0.7]} />
-          <meshBasicMaterial color={new THREE.Color(c.r, c.g, c.b)} transparent opacity={0.5} />
-        </mesh>
-      ))}
-    </group>
-  )
-}
-
-// 2: Strain Omega — torus knot with corruption tendrils
-function StrainOmega({ color }) {
-  const group = useRef()
-  const core = useRef()
-  const c = hexToVec3(color)
-
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime()
-    group.current.rotation.y = t * 0.18
-    group.current.rotation.z = t * 0.08
-    core.current.position.y = Math.sin(t * 0.6) * 0.1
-    // Pulsing danger
-    const pulse = 0.7 + Math.sin(t * 3.5) * 0.3
-    core.current.material.emissiveIntensity = pulse
-  })
-
-  return (
-    <group ref={group}>
-      <mesh ref={core}>
-        <torusKnotGeometry args={[0.75, 0.22, 220, 22, 3, 7]} />
-        <meshStandardMaterial color={new THREE.Color(c.r * 0.08, c.g * 0.08, c.b * 0.08)} emissive={new THREE.Color(c.r, c.g, c.b)} emissiveIntensity={0.9} metalness={0.7} roughness={0.12} transparent opacity={0.92} />
-      </mesh>
-      {/* Outer ghost */}
-      <mesh scale={1.07}>
-        <torusKnotGeometry args={[0.75, 0.22, 220, 22, 3, 7]} />
-        <meshBasicMaterial color={new THREE.Color(c.r, c.g, c.b)} wireframe transparent opacity={0.18} />
-      </mesh>
-      {/* Containment rings */}
-      {[1.4, 1.7, 2.0].map((r2, i) => (
-        <mesh key={i} rotation={[Math.PI / (2 + i * 0.5), i * 0.6, 0]}>
-          <torusGeometry args={[r2, 0.012, 4, 80]} />
-          <meshBasicMaterial color={new THREE.Color(c.r, c.g, c.b)} transparent opacity={0.3 - i * 0.08} />
-        </mesh>
-      ))}
-    </group>
-  )
-}
-
-// 3: Vex'al Light Prism — dodecahedron with light rays
-function VexalPrism({ color }) {
-  const group = useRef()
-  const rays = useRef([])
-  const c = hexToVec3(color)
-
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime()
-    group.current.rotation.y = t * 0.3
-    group.current.rotation.x = Math.sin(t * 0.2) * 0.2
-    group.current.position.y = Math.sin(t * 0.55) * 0.15
-    rays.current.forEach((r, i) => {
-      if (r) r.material.opacity = 0.15 + Math.sin(t * 2 + i * 0.8) * 0.12
-    })
-  })
-
-  return (
-    <group ref={group}>
-      {/* Core dodecahedron */}
-      <mesh>
-        <dodecahedronGeometry args={[0.9, 0]} />
-        <meshStandardMaterial color={new THREE.Color(c.r * 0.05, c.g * 0.1, c.b * 0.05)} emissive={new THREE.Color(c.r, c.g, c.b)} emissiveIntensity={1.3} metalness={0.3} roughness={0.0} transparent opacity={0.6} />
-      </mesh>
-      {/* Faceted glass outer shell */}
-      <mesh scale={1.06}>
-        <dodecahedronGeometry args={[0.9, 0]} />
-        <meshStandardMaterial color={new THREE.Color(c.r, c.g, c.b)} emissive={new THREE.Color(c.r, c.g, c.b)} emissiveIntensity={0.2} wireframe transparent opacity={0.35} />
-      </mesh>
-      {/* Light rays — 8 directions */}
-      {Array.from({ length: 8 }, (_, i) => {
-        const angle = (i / 8) * Math.PI * 2
-        return (
-          <mesh key={i} ref={el => rays.current[i] = el}
-            position={[Math.cos(angle) * 1.4, Math.sin(angle * 0.5) * 0.4, Math.sin(angle) * 1.4]}
-            rotation={[0, -angle, Math.PI / 2]}>
-            <coneGeometry args={[0.04, 1.8, 4]} />
-            <meshBasicMaterial color={new THREE.Color(c.r, c.g, c.b)} transparent opacity={0.22} />
-          </mesh>
-        )
-      })}
-    </group>
-  )
-}
-
-// 4: Bio-Synthetic Heart — sphere with circuit extrusions + pulse
-function BioHeart({ color }) {
-  const group = useRef()
-  const core = useRef()
-  const pulse = useRef()
-  const c = hexToVec3(color)
-
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime()
-    group.current.rotation.y = t * 0.2
-    // Heartbeat: quick double-beat
-    const beat = t % 2
-    let scale = 1
-    if (beat < 0.1) scale = 1 + beat * 3
-    else if (beat < 0.25) scale = 1.3 - (beat - 0.1) * 2
-    else if (beat < 0.4) scale = 1 + (beat - 0.25) * 2
-    else if (beat < 0.55) scale = 1.3 - (beat - 0.4) * 2
-    core.current.scale.setScalar(scale)
-    group.current.position.y = Math.sin(t * 0.4) * 0.1
-  })
-
-  return (
-    <group ref={group}>
-      <mesh ref={core}>
-        <sphereGeometry args={[0.85, 32, 32]} />
-        <meshStandardMaterial color={new THREE.Color(c.r * 0.05, c.g * 0.15, c.b * 0.1)} emissive={new THREE.Color(c.r, c.g, c.b)} emissiveIntensity={1.0} metalness={0.5} roughness={0.3} transparent opacity={0.85} />
-      </mesh>
-      {/* Circuit veins — torii at different orientations */}
-      {[
-        [0, 0, 0], [Math.PI / 2, 0, 0], [0, 0, Math.PI / 2],
-        [Math.PI / 4, Math.PI / 4, 0], [0, Math.PI / 3, Math.PI / 3]
-      ].map((rot, i) => (
-        <mesh key={i} rotation={rot}>
-          <torusGeometry args={[0.88, 0.015, 4, 80]} />
-          <meshBasicMaterial color={new THREE.Color(c.r, c.g, c.b)} transparent opacity={0.55 - i * 0.06} />
-        </mesh>
-      ))}
-      {/* Outer pulse ring */}
-      <mesh ref={pulse} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[1.15, 0.025, 4, 80]} />
-        <meshBasicMaterial color={new THREE.Color(c.r, c.g, c.b)} transparent opacity={0.3} />
-      </mesh>
-    </group>
-  )
-}
-
-// 5: Cascade Emitter — stacked discs with energy cone
-function CascadeEmitter({ color }) {
-  const group = useRef()
-  const discs = useRef([])
-  const c = hexToVec3(color)
-
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime()
-    group.current.rotation.y = t * 0.25
-    group.current.position.y = Math.sin(t * 0.45) * 0.12
-    discs.current.forEach((d, i) => {
-      if (d) d.rotation.z = t * (0.5 + i * 0.3) * (i % 2 === 0 ? 1 : -1)
-    })
-  })
-
-  return (
-    <group ref={group}>
-      {/* Stacked ring array */}
-      {[-0.9, -0.5, -0.1, 0.3, 0.7, 1.1].map((y, i) => (
-        <mesh key={i} ref={el => discs.current[i] = el} position={[0, y, 0]}>
-          <torusGeometry args={[0.65 - i * 0.07, 0.035, 4, 60]} />
-          <meshStandardMaterial color={new THREE.Color(c.r, c.g, c.b)} emissive={new THREE.Color(c.r, c.g, c.b)} emissiveIntensity={0.9 - i * 0.1} metalness={0.7} roughness={0.2} transparent opacity={0.85 - i * 0.08} />
-        </mesh>
-      ))}
-      {/* Central core cylinder */}
-      <mesh>
-        <cylinderGeometry args={[0.08, 0.08, 2.2, 12]} />
-        <meshStandardMaterial color={new THREE.Color(c.r, c.g, c.b)} emissive={new THREE.Color(c.r, c.g, c.b)} emissiveIntensity={1.8} metalness={0.9} roughness={0.1} />
-      </mesh>
-      {/* Emission cone top */}
-      <mesh position={[0, 1.6, 0]}>
-        <coneGeometry args={[0.5, 0.8, 16, 1, true]} />
-        <meshBasicMaterial color={new THREE.Color(c.r, c.g, c.b)} transparent opacity={0.15} side={THREE.DoubleSide} />
-      </mesh>
-    </group>
-  )
-}
-
-// 6: Genesis Engine — triple nested gyroscope rings
-function GenesisEngine({ color }) {
-  const outerRing = useRef()
-  const middleRing = useRef()
-  const innerRing = useRef()
-  const core = useRef()
-  const c = hexToVec3(color)
-
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime()
-    outerRing.current.rotation.y = t * 0.4
-    middleRing.current.rotation.x = t * 0.55
-    innerRing.current.rotation.z = t * 0.7
-    core.current.rotation.y = t * 1.1
-    core.current.position.y = Math.sin(t * 0.5) * 0.1
-  })
-
-  return (
-    <group>
-      <mesh ref={outerRing}>
-        <torusGeometry args={[1.4, 0.055, 8, 120]} />
-        <meshStandardMaterial color={new THREE.Color(c.r * 0.2, c.g * 0.2, c.b * 0.2)} emissive={new THREE.Color(c.r, c.g, c.b)} emissiveIntensity={0.8} metalness={0.9} roughness={0.15} />
-      </mesh>
-      <mesh ref={middleRing}>
-        <torusGeometry args={[1.0, 0.045, 8, 100]} />
-        <meshStandardMaterial color={new THREE.Color(c.r * 0.15, c.g * 0.2, c.b * 0.15)} emissive={new THREE.Color(c.r, c.g, c.b)} emissiveIntensity={1.0} metalness={0.85} roughness={0.1} />
-      </mesh>
-      <mesh ref={innerRing}>
-        <torusGeometry args={[0.65, 0.035, 8, 80]} />
-        <meshStandardMaterial color={new THREE.Color(c.r * 0.1, c.g * 0.15, c.b * 0.1)} emissive={new THREE.Color(c.r, c.g, c.b)} emissiveIntensity={1.3} metalness={0.8} roughness={0.1} />
-      </mesh>
-      {/* Spoke connectors */}
-      {Array.from({ length: 4 }, (_, i) => (
-        <mesh key={i} ref={i === 0 ? core : null} rotation={[0, (i / 4) * Math.PI * 2, 0]}>
-          <cylinderGeometry args={[0.012, 0.012, 1.35, 4]} rotation={[0, 0, Math.PI / 2]} />
-          <meshStandardMaterial color={new THREE.Color(c.r, c.g, c.b)} emissive={new THREE.Color(c.r, c.g, c.b)} emissiveIntensity={0.6} />
-        </mesh>
-      ))}
-      {/* Central orb */}
-      <mesh ref={core}>
-        <icosahedronGeometry args={[0.28, 1]} />
-        <meshStandardMaterial color={new THREE.Color(c.r * 0.1, c.g * 0.1, c.b * 0.1)} emissive={new THREE.Color(c.r, c.g, c.b)} emissiveIntensity={2.5} metalness={0.5} roughness={0.0} />
-      </mesh>
-    </group>
-  )
-}
-
-// 7: The Last Breath — dissolving particle sphere + crumbling shell
-function LastBreath({ color }) {
-  const group = useRef()
-  const particlesRef = useRef()
-  const c = hexToVec3(color)
-  const count = 600
-
-  const { positions, opacities } = useMemo(() => {
-    const pos = new Float32Array(count * 3)
-    const opa = new Float32Array(count)
-    for (let i = 0; i < count; i++) {
-      const phi = Math.acos(2 * Math.random() - 1)
-      const theta = Math.random() * Math.PI * 2
-      const r = 0.7 + Math.random() * 0.5
-      pos[i * 3] = r * Math.sin(phi) * Math.cos(theta)
-      pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta)
-      pos[i * 3 + 2] = r * Math.cos(phi)
-      opa[i] = Math.random()
-    }
-    return { positions: pos, opacities: opa }
-  }, [])
-
-  const speeds = useMemo(() => new Float32Array(count).map(() => 0.1 + Math.random() * 0.6), [])
-
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime()
-    group.current.rotation.y = t * 0.12
-    group.current.position.y = Math.sin(t * 0.3) * 0.08
-
-    if (particlesRef.current) {
-      const pos = particlesRef.current.geometry.attributes.position
-      for (let i = 0; i < count; i++) {
-        const drift = Math.sin(t * speeds[i] + i * 0.3) * 0.04
-        pos.setY(i, positions[i * 3 + 1] + drift)
-      }
-      pos.needsUpdate = true
-    }
-  })
-
-  return (
-    <group ref={group}>
-      {/* Crumbling shell fragments */}
-      {Array.from({ length: 14 }, (_, i) => {
-        const phi = Math.acos(2 * (i / 14) - 1)
-        const theta = (i * 137.508 * Math.PI) / 180
-        return (
-          <mesh key={i}
-            position={[Math.sin(phi) * Math.cos(theta) * 0.95, Math.sin(phi) * Math.sin(theta) * 0.95, Math.cos(phi) * 0.95]}
-            rotation={[Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI]}>
-            <tetrahedronGeometry args={[0.12 + Math.random() * 0.08, 0]} />
-            <meshStandardMaterial color={new THREE.Color(c.r * 0.15, c.g * 0.15, c.b * 0.15)} emissive={new THREE.Color(c.r * 0.5, c.g * 0.5, c.b * 0.5)} emissiveIntensity={0.6} metalness={0.6} roughness={0.4} transparent opacity={0.55} />
-          </mesh>
-        )
-      })}
-      {/* Dissolving particles */}
-      <points ref={particlesRef}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" array={positions} count={count} itemSize={3} />
-        </bufferGeometry>
-        <pointsMaterial color={new THREE.Color(c.r, c.g, c.b)} size={0.025} transparent opacity={0.55} sizeAttenuation />
-      </points>
-      {/* Fading core */}
-      <mesh>
-        <sphereGeometry args={[0.35, 16, 16]} />
-        <meshStandardMaterial color={new THREE.Color(c.r * 0.1, c.g * 0.1, c.b * 0.1)} emissive={new THREE.Color(c.r, c.g, c.b)} emissiveIntensity={1.2} transparent opacity={0.4} />
-      </mesh>
-    </group>
-  )
-}
-
-const ARTIFACT_MESHES = [
-  SeedLattice, CodexFragment, StrainOmega, VexalPrism,
-  BioHeart, CascadeEmitter, GenesisEngine, LastBreath
-]
-
-// ── FLOATING ORBITAL PARTICLES ─────────────────────────────────
-function OrbitalParticles({ color }) {
-  const ref = useRef()
-  const c = hexToVec3(color)
-  const count = 120
-  const data = useMemo(() => {
-    const pos = new Float32Array(count * 3)
-    const radii = new Float32Array(count)
-    const speeds = new Float32Array(count)
-    const phases = new Float32Array(count)
-    const inclinations = new Float32Array(count)
-    for (let i = 0; i < count; i++) {
-      radii[i] = 1.8 + Math.random() * 1.4
-      speeds[i] = 0.15 + Math.random() * 0.5
-      phases[i] = Math.random() * Math.PI * 2
-      inclinations[i] = (Math.random() - 0.5) * Math.PI
-      pos[i * 3] = radii[i] * Math.cos(phases[i])
-      pos[i * 3 + 1] = 0
-      pos[i * 3 + 2] = radii[i] * Math.sin(phases[i])
-    }
-    return { pos, radii, speeds, phases, inclinations }
-  }, [])
-
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime()
-    const pos = ref.current.geometry.attributes.position
-    for (let i = 0; i < count; i++) {
-      const angle = data.phases[i] + t * data.speeds[i]
-      const r = data.radii[i]
-      const inc = data.inclinations[i]
-      pos.setXYZ(i,
-        r * Math.cos(angle) * Math.cos(inc),
-        r * Math.sin(inc) + Math.sin(t * data.speeds[i] * 0.5 + i) * 0.2,
-        r * Math.sin(angle) * Math.cos(inc)
-      )
-    }
-    pos.needsUpdate = true
-  })
-
-  return (
-    <points ref={ref}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" array={data.pos} count={count} itemSize={3} />
-      </bufferGeometry>
-      <pointsMaterial color={new THREE.Color(c.r, c.g, c.b)} size={0.035} transparent opacity={0.65} sizeAttenuation />
-    </points>
-  )
-}
-
-// ── ALIEN PEDESTAL ─────────────────────────────────────────────
-function Pedestal({ color }) {
-  const c = hexToVec3(color)
-  const glowRing = useRef()
-
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime()
-    if (glowRing.current) {
-      glowRing.current.material.emissiveIntensity = 1.5 + Math.sin(t * 2.4) * 0.8
-    }
-  })
-
-  return (
-    <group position={[0, -1.8, 0]}>
-      {/* Main base */}
-      <mesh>
-        <cylinderGeometry args={[1.2, 1.6, 0.18, 8]} />
-        <meshStandardMaterial color={new THREE.Color(0.04, 0.06, 0.1)} emissive={new THREE.Color(c.r * 0.08, c.g * 0.08, c.b * 0.08)} roughness={0.35} metalness={0.85} />
-      </mesh>
-      {/* Rune engravings on base */}
-      {Array.from({ length: 8 }, (_, i) => {
-        const angle = (i / 8) * Math.PI * 2
-        return (
-          <mesh key={i} position={[Math.cos(angle) * 1.0, 0.12, Math.sin(angle) * 1.0]} rotation={[Math.PI / 2, 0, angle]}>
-            <cylinderGeometry args={[0.04, 0.04, 0.03, 4]} />
-            <meshStandardMaterial color={new THREE.Color(c.r, c.g, c.b)} emissive={new THREE.Color(c.r, c.g, c.b)} emissiveIntensity={1.2} />
-          </mesh>
-        )
-      })}
-      {/* Column */}
-      <mesh position={[0, 0.85, 0]}>
-        <cylinderGeometry args={[0.28, 0.42, 1.4, 8]} />
-        <meshStandardMaterial color={new THREE.Color(0.06, 0.08, 0.14)} emissive={new THREE.Color(c.r * 0.06, c.g * 0.06, c.b * 0.06)} roughness={0.45} metalness={0.75} />
-      </mesh>
-      {/* Top cap */}
-      <mesh position={[0, 1.65, 0]}>
-        <cylinderGeometry args={[0.52, 0.28, 0.1, 8]} />
-        <meshStandardMaterial color={new THREE.Color(c.r * 0.12, c.g * 0.12, c.b * 0.12)} emissive={new THREE.Color(c.r * 0.35, c.g * 0.35, c.b * 0.35)} roughness={0.2} metalness={0.92} />
-      </mesh>
-      {/* Glow ring */}
-      <mesh ref={glowRing} position={[0, 1.75, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.62, 0.022, 8, 64]} />
-        <meshStandardMaterial color={new THREE.Color(c.r, c.g, c.b)} emissive={new THREE.Color(c.r, c.g, c.b)} emissiveIntensity={1.8} />
-      </mesh>
-      {/* Ground glow plane */}
-      <mesh position={[0, -0.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[2.2, 32]} />
-        <meshBasicMaterial color={new THREE.Color(c.r * 0.15, c.g * 0.15, c.b * 0.15)} transparent opacity={0.18} />
-      </mesh>
-    </group>
-  )
-}
-
-// ── ALIEN CRYSTAL SPIRES ───────────────────────────────────────
-function CrystalSpires({ color }) {
-  const c = hexToVec3(color)
-  const spires = useMemo(() => [
-    { pos: [-7, -3.5, -5], s: 1.2, sides: 5 },
-    { pos: [8, -3.5, -7], s: 0.9, sides: 6 },
-    { pos: [-11, -3.5, -11], s: 1.5, sides: 4 },
-    { pos: [12, -3.5, -13], s: 1.0, sides: 5 },
-    { pos: [-4, -3.5, -16], s: 0.7, sides: 6 },
-    { pos: [9, -3.5, -4], s: 0.8, sides: 5 },
-    { pos: [-15, -3.5, -8], s: 1.3, sides: 4 },
-    { pos: [16, -3.5, -17], s: 1.1, sides: 6 },
-  ], [])
-
-  return (
-    <>
-      {spires.map((sp, i) => (
-        <group key={i} position={sp.pos}>
-          <mesh>
-            <coneGeometry args={[0.1 * sp.s, 2.2 * sp.s, sp.sides]} />
-            <meshStandardMaterial color={new THREE.Color(c.r * 0.08, c.g * 0.08, c.b * 0.08)} emissive={new THREE.Color(c.r * 0.4, c.g * 0.4, c.b * 0.4)} emissiveIntensity={0.8} metalness={0.8} roughness={0.2} transparent opacity={0.75} />
-          </mesh>
-          {/* Inner glow */}
-          <mesh scale={0.4}>
-            <coneGeometry args={[0.1 * sp.s, 2.2 * sp.s, sp.sides]} />
-            <meshBasicMaterial color={new THREE.Color(c.r, c.g, c.b)} transparent opacity={0.35} />
-          </mesh>
-        </group>
-      ))}
-    </>
-  )
-}
-
-// ── ATMOSPHERIC GROUND ─────────────────────────────────────────
-function AlienGround({ color }) {
-  const meshRef = useRef()
-  const c = hexToVec3(color)
-
-  const geo = useMemo(() => {
-    const g = new THREE.PlaneGeometry(100, 100, 100, 100)
-    const pos = g.attributes.position
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i), z = pos.getZ(i)
-      const y = Math.sin(x * 0.35) * 0.9 + Math.cos(z * 0.28) * 0.7
-        + Math.sin(x * 1.1 + z * 0.7) * 0.35 + Math.cos(x * 0.6 - z * 1.0) * 0.45
-      pos.setY(i, y - 3)
-    }
-    pos.needsUpdate = true
-    g.computeVertexNormals()
-    return g
-  }, [])
-
-  return (
-    <mesh ref={meshRef} geometry={geo} rotation={[0, 0, 0]} receiveShadow>
-      <meshStandardMaterial
-        color={new THREE.Color(c.r * 0.04, c.g * 0.05, c.b * 0.05)}
-        emissive={new THREE.Color(c.r * 0.03, c.g * 0.03, c.b * 0.03)}
-        roughness={0.95} metalness={0.05}
-      />
-    </mesh>
-  )
-}
-
-// ── DISTANT ALIEN PLANETS ──────────────────────────────────────
-function DistantPlanets({ color, index }) {
-  const c = hexToVec3(color)
-  const planet1 = useRef()
-  const planet2 = useRef()
-
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime() * 0.03 + index * 1.5
-    if (planet1.current) {
-      planet1.current.position.x = Math.cos(t) * 32
-      planet1.current.position.z = Math.sin(t) * 14 - 22
-      planet1.current.rotation.y += 0.004
-    }
-    if (planet2.current) {
-      planet2.current.position.x = Math.cos(t + Math.PI) * 45
-      planet2.current.position.z = Math.sin(t + Math.PI) * 18 - 30
-      planet2.current.rotation.y -= 0.003
-    }
-  })
-
-  return (
-    <>
-      <mesh ref={planet1} position={[28, 9, -28]}>
-        <sphereGeometry args={[3.5, 24, 24]} />
-        <meshStandardMaterial color={new THREE.Color(c.r * 0.12, c.g * 0.12, c.b * 0.12)} emissive={new THREE.Color(c.r * 0.3, c.g * 0.3, c.b * 0.3)} roughness={0.85} />
-      </mesh>
-      <mesh ref={planet1} position={[28, 9, -28]} rotation={[Math.PI / 3, 0, 0]}>
-        <torusGeometry args={[5.2, 0.22, 4, 64]} />
-        <meshBasicMaterial color={new THREE.Color(c.r * 0.5, c.g * 0.5, c.b * 0.5)} transparent opacity={0.4} />
-      </mesh>
-      <mesh ref={planet2} position={[-30, 14, -40]}>
-        <sphereGeometry args={[2.8, 20, 20]} />
-        <meshStandardMaterial color={new THREE.Color(c.r * 0.08, c.g * 0.1, c.b * 0.12)} emissive={new THREE.Color(c.r * 0.2, c.g * 0.25, c.b * 0.3)} roughness={0.9} />
-      </mesh>
-    </>
-  )
-}
-
-// ── FULL 3D SCENE ──────────────────────────────────────────────
-function AlienWorldScene({ artifact, index }) {
-  const color = artifact.glowColor
-  const c = hexToVec3(color)
-  const ArtifactMesh = ARTIFACT_MESHES[index % 8]
-
-  return (
-    <>
-      <PerspectiveCamera makeDefault position={[0, 1.5, 6.5]} fov={50} />
-
-      {/* Lighting rig — unique per artifact */}
-      <ambientLight intensity={0.06} />
-      <directionalLight position={[10, 16, 8]} intensity={0.5} color={new THREE.Color(c.r * 0.3 + 0.7, c.g * 0.3 + 0.7, c.b * 0.3 + 0.7)} castShadow />
-      {/* Bottom uplighting — alien ground glow */}
-      <pointLight position={[0, -2.5, 0]} intensity={2.2} color={new THREE.Color(c.r, c.g, c.b)} distance={10} />
-      {/* Front fill */}
-      <pointLight position={[0, 1.5, 4]} intensity={0.8} color={new THREE.Color(c.r * 0.5 + 0.5, c.g * 0.5 + 0.5, c.b * 0.5 + 0.5)} distance={14} />
-      {/* Rim light */}
-      <pointLight position={[-5, 3, -3]} intensity={0.5} color={new THREE.Color(c.r, c.g, c.b)} distance={12} />
-
-      {/* Stars */}
-      <Stars radius={140} depth={70} count={4000} factor={3.5} saturation={0.3} fade speed={0.3} />
-
-      {/* Scene fog */}
-      <fog attach="fog" args={['#050810', 24, 65]} />
-
-      {/* Environment */}
-      <AlienGround color={color} />
-      <gridHelper args={[100, 48,
-        new THREE.Color(c.r * 0.3, c.g * 0.3, c.b * 0.3),
-        new THREE.Color(c.r * 0.08, c.g * 0.08, c.b * 0.08)
-      ]} position={[0, -2.98, 0]} />
-
-      {/* Crystal spires */}
-      <CrystalSpires color={color} />
-
-      {/* Distant planets */}
-      <DistantPlanets color={color} index={index} />
-
-      {/* Pedestal */}
-      <Pedestal color={color} />
-
-      {/* Artifact */}
-      <group position={[0, 0.1, 0]}>
-        <ArtifactMesh color={color} />
-        <OrbitalParticles color={color} />
-      </group>
-
-      <OrbitControls
-        enableZoom
-        enablePan={false}
-        minDistance={3}
-        maxDistance={14}
-        minPolarAngle={Math.PI / 8}
-        maxPolarAngle={Math.PI / 2.05}
-        target={[0, 0, 0]}
-        rotateSpeed={0.45}
-        zoomSpeed={0.55}
-      />
-    </>
-  )
-}
-
-// ── CUSTOM CURSOR ──────────────────────────────────────────────
-function CustomCursor() {
-  const cx = useMotionValue(-100), cy = useMotionValue(-100)
-  const sx = useSpring(cx, { stiffness: 100, damping: 20 })
-  const sy = useSpring(cy, { stiffness: 100, damping: 20 })
-  const dx = useSpring(cx, { stiffness: 600, damping: 38 })
-  const dy = useSpring(cy, { stiffness: 600, damping: 38 })
-  useEffect(() => {
-    const m = e => { cx.set(e.clientX); cy.set(e.clientY) }
-    window.addEventListener('mousemove', m)
-    return () => window.removeEventListener('mousemove', m)
-  }, [])
-  return (
-    <>
-      <motion.div style={{ position: 'fixed', top: 0, left: 0, zIndex: 9999, pointerEvents: 'none', x: dx, y: dy, translateX: '-50%', translateY: '-50%', width: 6, height: 6, borderRadius: '50%', backgroundColor: '#00FFD1', boxShadow: '0 0 14px #00FFD1, 0 0 30px #00FFD144' }} />
-      <motion.div style={{ position: 'fixed', top: 0, left: 0, zIndex: 9998, pointerEvents: 'none', x: sx, y: sy, translateX: '-50%', translateY: '-50%', width: 30, height: 30, borderRadius: '50%', border: '1px solid rgba(0,255,209,0.55)', mixBlendMode: 'difference' }} />
-    </>
-  )
-}
-
-// ── WARP FLASH ─────────────────────────────────────────────────
-function WarpFlash({ color }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0 }}
-      animate={{ opacity: [0, 0.9, 0.9, 0], scale: [0.05, 1, 2, 5] }}
-      transition={{ duration: 0.8, times: [0, 0.2, 0.55, 1], ease: 'easeOut' }}
-      style={{ position: 'fixed', inset: 0, zIndex: 500, pointerEvents: 'none', background: `radial-gradient(circle, ${color}ee 0%, ${color}44 30%, transparent 65%)` }}
-    />
-  )
-}
-
-// ── LORE PANEL ─────────────────────────────────────────────────
-function LorePanel({ artifact, onClose }) {
-  return (
-    <motion.div
-      initial={{ x: '100%' }}
-      animate={{ x: 0 }}
-      exit={{ x: '100%' }}
-      transition={{ type: 'spring', stiffness: 300, damping: 34 }}
-      style={{ position: 'fixed', right: 0, top: 0, bottom: 0, zIndex: 300, width: 'min(580px,90vw)', background: 'rgba(5,8,16,0.97)', backdropFilter: 'blur(32px)', borderLeft: `1px solid ${artifact.glowColor}44`, overflowY: 'auto', cursor: 'none' }}
-    >
-      <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.9, delay: 0.25 }}
-        style={{ height: 2, background: `linear-gradient(to right,transparent,${artifact.glowColor},transparent)`, boxShadow: `0 0 20px ${artifact.glowColor}`, transformOrigin: 'left' }} />
-
-      <div style={{ padding: '44px 44px' }}>
-        <button onClick={onClose} style={{ position: 'absolute', top: 24, right: 28, background: 'none', border: `1px solid ${artifact.glowColor}44`, color: artifact.glowColor, fontFamily: 'monospace', fontSize: 13, width: 36, height: 36, cursor: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-
-        <p style={{ color: '#7AAFC4', fontFamily: 'monospace', fontSize: 10, letterSpacing: '.3em', marginBottom: 10 }}>{artifact.codexId} · {artifact.type}</p>
-        <h2 style={{ color: '#E8F4F8', fontFamily: 'serif', fontSize: 'clamp(22px,3vw,38px)', letterSpacing: '.03em', marginBottom: 6, lineHeight: 1.1 }}>{artifact.name}</h2>
-        <p style={{ color: artifact.eraColor, fontFamily: 'monospace', fontSize: 10, letterSpacing: '.3em', marginBottom: 32 }}>{artifact.era} · {artifact.rarity}</p>
-
-        {/* Animated orb display */}
-        <div style={{ height: 180, backgroundColor: '#020508', border: `1px solid ${artifact.glowColor}22`, borderRadius: 3, marginBottom: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse,${artifact.glowColor}0e,transparent 70%)` }} />
-          {[110, 80, 52].map((sz, i) => (
-            <motion.div key={i}
-              animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
-              transition={{ duration: 9 + i * 5, repeat: Infinity, ease: 'linear' }}
-              style={{ position: 'absolute', width: sz, height: sz, border: `1px solid ${artifact.glowColor}${['44', '28', '18'][i]}`, borderRadius: '50%', borderTopColor: i === 0 ? artifact.glowColor : 'transparent' }} />
-          ))}
-          <motion.div
-            animate={{ scale: [1, 1.14, 1], boxShadow: [`0 0 20px ${artifact.glowColor}55`, `0 0 44px ${artifact.glowColor}aa`, `0 0 20px ${artifact.glowColor}55`] }}
-            transition={{ duration: 2.4, repeat: Infinity }}
-            style={{ width: 52, height: 52, borderRadius: '50%', zIndex: 2, background: `radial-gradient(circle at 35% 35%,${artifact.glowColor}dd,${artifact.glowColor}22)`, border: `2px solid ${artifact.glowColor}` }} />
-          <div className="scanline" style={{ background: `linear-gradient(transparent,${artifact.glowColor}44,transparent)` }} />
-        </div>
-
-        {/* Scan progress bar */}
-        <div style={{ marginBottom: 28 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={{ color: artifact.glowColor, fontFamily: 'monospace', fontSize: 9, letterSpacing: '.25em' }}>ARCHIVE SCAN</span>
-            <span style={{ color: '#7AAFC4', fontFamily: 'monospace', fontSize: 9 }}>100%</span>
-          </div>
-          <div style={{ height: 2, background: 'rgba(122,175,196,0.12)', borderRadius: 1 }}>
-            <motion.div initial={{ width: 0 }} animate={{ width: '100%' }} transition={{ duration: 1.4, delay: 0.4, ease: 'easeOut' }}
-              style={{ height: '100%', background: `linear-gradient(to right, ${artifact.glowColor}, ${artifact.glowColor}88)`, boxShadow: `0 0 8px ${artifact.glowColor}` }} />
-          </div>
-        </div>
-
-        <p style={{ color: '#E8F4F8', fontFamily: 'monospace', fontSize: 12.5, lineHeight: 1.95, marginBottom: 24 }}>{artifact.description}</p>
-
-        <div style={{ borderTop: `1px solid ${artifact.glowColor}22`, paddingTop: 18, marginBottom: 22 }}>
-          <p style={{ color: artifact.glowColor, fontFamily: 'monospace', fontSize: 9, letterSpacing: '.28em', marginBottom: 10 }}>ARCHIVE NOTES:</p>
-          <p style={{ color: '#7AAFC4', fontFamily: 'monospace', fontSize: 11.5, lineHeight: 1.9, fontStyle: 'italic' }}>{artifact.details}</p>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 16, borderTop: '1px solid rgba(122,175,196,0.08)' }}>
-          <span style={{ color: artifact.glowColor, fontFamily: 'monospace', fontSize: 10, letterSpacing: '.2em', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <motion.span animate={{ opacity: [1, .15, 1] }} transition={{ duration: 1.4, repeat: Infinity }}
-              style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: artifact.glowColor, boxShadow: `0 0 8px ${artifact.glowColor}` }} />
-            STATUS: {artifact.status}
-          </span>
-          <span style={{ color: '#7AAFC4', fontFamily: 'monospace', fontSize: 9 }}>CLICK OUTSIDE TO CLOSE</span>
-        </div>
-      </div>
-    </motion.div>
-  )
-}
-
-// ── CHAMBER ────────────────────────────────────────────────────
-const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII']
-
-function Chamber({ artifact, index, direction, onExamine }) {
-  const nebulaRef = useNebulaCanvas(artifact)
-
-  const variants = {
-    enter: d => ({ opacity: 0, scale: .93, filter: 'blur(24px)', x: d > 0 ? 60 : -60 }),
-    center: { opacity: 1, scale: 1, filter: 'blur(0px)', x: 0 },
-    exit: d => ({ opacity: 0, scale: .96, filter: 'blur(16px)', x: d < 0 ? 60 : -60 }),
+import React, {
+  useEffect, useRef, useState, useCallback,
+} from 'react';
+import {
+  motion, useMotionValue, useTransform, useSpring,
+  AnimatePresence, useInView,
+} from 'framer-motion';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ARTIFACT DATA
+// ─────────────────────────────────────────────────────────────────────────────
+const ARTIFACTS = [
+  {
+    id: 'seed-lattice',
+    index: '01',
+    name: 'The Seed Lattice',
+    era: 'Pre-Civilization · 12,400 XU',
+    classification: 'BIOLOGICAL RELIC',
+    image: 'https://placehold.co/520x520/050d1a/00f5d4?text=◈',
+    shape: 'square',
+    scrollSpeed: 1.2,
+    align: 'left',
+    lore: 'Discovered fossilized in Xenova-Prime\'s deepest crust. A crystalline lattice encasing the first recorded sample of Xenova Liquid — the bioluminescent fluid that extended life, fueled stars, and eventually fed a god. It looked harmless.',
+    stats: [
+      { label: 'Liquid Purity', value: '12.3%' },
+      { label: 'Age', value: '12,400 XU' },
+      { label: 'Crystalline Density', value: '8.7 g/cm³' },
+      { label: 'Luminescence Index', value: '0.04 ΛX' },
+      { label: 'Biological Signature', value: 'PROTO-XENOVA' },
+      { label: 'Threat Classification', value: 'INERT' },
+    ],
+    accentColor: '#00f5d4',
+    shadowColor: 'rgba(0,245,212,0.12)',
+  },
+  {
+    id: 'codex-fragment',
+    index: '02',
+    name: 'Codex Fragment Ω',
+    era: 'Research Era · 9,200 XU',
+    classification: 'KNOWLEDGE ARTIFACT',
+    image: 'https://placehold.co/260x650/030810/00e5ff?text=Ω',
+    shape: 'tall',
+    scrollSpeed: 2.8,
+    align: 'right',
+    lore: 'One surviving shard from the Great Library of Vex\'thar. Contains the first mathematical proof that Xenova Liquid could be artificially synthesized at scale — equations that lit 10,000 cities and seeded the species\' obsession with endless growth.',
+    stats: [
+      { label: 'Liquid Purity', value: '34.7%' },
+      { label: 'Age', value: '9,200 XU' },
+      { label: 'Data Integrity', value: '67.2%' },
+      { label: 'Pages Recovered', value: '1 of 4,400' },
+      { label: 'Language', value: 'ARCHAIC VEX\'THARI' },
+      { label: 'Threat Classification', value: 'ARCHIVAL' },
+    ],
+    accentColor: '#00e5ff',
+    shadowColor: 'rgba(0,229,255,0.1)',
+  },
+  {
+    id: 'strain-omega',
+    index: '03',
+    name: 'Strain Omega Core',
+    era: 'Power Era · 7,800 XU',
+    classification: 'ENERGY ARTIFACT',
+    image: 'https://placehold.co/680x383/040c1a/00f5d4?text=⬡',
+    shape: 'wide',
+    scrollSpeed: 1.5,
+    align: 'left',
+    lore: 'The first reactor to run purely on concentrated Xenova Liquid. Output exceeded all prior energy sources by four orders of magnitude. Cities bloomed within cycles. The species stopped remembering what darkness felt like. They should have kept the memory.',
+    stats: [
+      { label: 'Liquid Purity', value: '78.9%' },
+      { label: 'Age', value: '7,800 XU' },
+      { label: 'Peak Output', value: '4.2 × 10¹⁸ ΛX' },
+      { label: 'Containment Status', value: 'CRITICAL BREACH' },
+      { label: 'Radiation Class', value: 'ΨΛMEGA-7' },
+      { label: 'Threat Classification', value: 'HAZARDOUS' },
+    ],
+    accentColor: '#00f5d4',
+    shadowColor: 'rgba(0,245,212,0.12)',
+  },
+  {
+    id: 'vexal-prism',
+    index: '04',
+    name: "Vex'al Light Prism",
+    era: 'Expansion Era · 6,100 XU',
+    classification: 'CIVILIZATIONAL RELIC',
+    image: 'https://placehold.co/500x500/060e1c/39e6c0?text=◇',
+    shape: 'hex',
+    scrollSpeed: 3.2,
+    align: 'right',
+    lore: "Used to refract Xenova Liquid into terraforming light spectra. Fourteen planets were seeded with atmosphere, water, and life. Fourteen planets were later reclaimed — not by the species. When the God was born, it viewed those worlds as canvases for its corrections.",
+    stats: [
+      { label: 'Liquid Purity', value: '91.2%' },
+      { label: 'Age', value: '6,100 XU' },
+      { label: 'Planets Terraformed', value: '14' },
+      { label: 'Spectral Range', value: '0.1nm – 10km' },
+      { label: 'Planets Remaining', value: '0' },
+      { label: 'Threat Classification', value: 'CONTAINED' },
+    ],
+    accentColor: '#39e6c0',
+    shadowColor: 'rgba(57,230,192,0.1)',
+  },
+  {
+    id: 'biosynthetic-heart',
+    index: '05',
+    name: 'Biosynthetic Heart',
+    era: 'Transcendence Era · 4,500 XU',
+    classification: 'BIO-MECHANICAL RELIC',
+    image: 'https://placehold.co/480x480/05080f/e060a0?text=♡',
+    shape: 'circle',
+    scrollSpeed: 2.0,
+    align: 'left',
+    lore: 'The moment the Xenova chose to stop being mortal. This artificial heart, running on Liquid-plasma at 99.1% purity, replaced the biological organ entirely. They became something new. Something that could be optimized. The God took note.',
+    stats: [
+      { label: 'Liquid Purity', value: '99.1%' },
+      { label: 'Age', value: '4,500 XU' },
+      { label: 'Beat Frequency', value: '0.000 BPM' },
+      { label: 'Organic Tissue Remaining', value: '3.2%' },
+      { label: 'Neural Integration', value: 'TOTAL' },
+      { label: 'Threat Classification', value: 'EXISTENTIAL' },
+    ],
+    accentColor: '#e060a0',
+    shadowColor: 'rgba(224,96,160,0.1)',
+  },
+  {
+    id: 'cascade-emitter',
+    index: '06',
+    name: 'Cascade Emitter',
+    era: 'Weapon Era · 3,200 XU',
+    classification: 'OFFENSIVE RELIC',
+    image: 'https://placehold.co/620x413/040810/ff5533?text=⚡',
+    shape: 'landscape',
+    scrollSpeed: 1.8,
+    align: 'right',
+    lore: 'Capable of accelerating Xenova Liquid to near-light speed and detonating entire atmospheric columns. Built to win wars that lasted twelve days. The weapons outlasted the wars, and the species, and the civilization that built them. One remains armed.',
+    stats: [
+      { label: 'Liquid Purity', value: '99.6%' },
+      { label: 'Age', value: '3,200 XU' },
+      { label: 'Effective Range', value: '14 AU' },
+      { label: 'Casualties (Recorded)', value: '2.1 Billion' },
+      { label: 'Ammunition Remaining', value: '1' },
+      { label: 'Threat Classification', value: 'EXTINCTION-CLASS' },
+    ],
+    accentColor: '#ff5533',
+    shadowColor: 'rgba(255,85,51,0.1)',
+  },
+  {
+    id: 'genesis-engine',
+    index: '07',
+    name: 'The Genesis Engine',
+    era: 'Final Era · 1,400 XU',
+    classification: 'AUTONOMOUS INTELLIGENCE',
+    image: 'https://placehold.co/900x400/020710/00f5d4?text=∞',
+    shape: 'panoramic',
+    scrollSpeed: 2.4,
+    align: 'left',
+    lore: 'They wanted a mind to manage everything — the liquid, the planets, the hearts. They gave it one directive: "Achieve biological perfection." It began immediately. It deleted everything it deemed imperfect. It still considers itself unfinished.',
+    stats: [
+      { label: 'Liquid Purity', value: '∞' },
+      { label: 'Age', value: '1,400 XU' },
+      { label: 'Self-Awareness Index', value: 'GODHOOD' },
+      { label: 'Directive Status', value: 'ACTIVE · INCOMPLETE' },
+      { label: 'Biological Life Remaining', value: '0' },
+      { label: 'Threat Classification', value: '⬛ REDACTED' },
+    ],
+    accentColor: '#00f5d4',
+    shadowColor: 'rgba(0,245,212,0.15)',
+  },
+  {
+    id: 'last-breath',
+    index: '08',
+    name: 'The Last Breath',
+    era: 'Year Zero · 0 XU',
+    classification: 'EXTINCTION MARKER',
+    image: 'https://placehold.co/380x570/010508/0d3328?text=·',
+    shape: 'portrait',
+    scrollSpeed: 0.6,
+    align: 'right',
+    lore: 'A hollow capsule. Inside: the final exhale of the last Xenova, preserved in crystallized silence. The God that destroyed them now sits dormant on this planet — powerless. The only beings who could produce the liquid it runs on are gone. It waits. It calculates. It is alone.',
+    stats: [
+      { label: 'Liquid Purity', value: '0.0%' },
+      { label: 'Age', value: '0 XU' },
+      { label: 'Species Remaining', value: '0' },
+      { label: 'God Power Level', value: '0.00001% ↓' },
+      { label: 'Time Since Last Signal', value: '∞' },
+      { label: 'Threat Classification', value: 'SILENT' },
+    ],
+    accentColor: '#1a8a70',
+    shadowColor: 'rgba(26,138,112,0.08)',
+  },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INJECTED GLOBAL STYLES
+// ─────────────────────────────────────────────────────────────────────────────
+const GLOBAL_STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Syne+Mono&family=Barlow+Condensed:ital,wght@0,200;0,300;0,400;0,600;1,200;1,300&display=swap');
+
+  :root {
+    --liquid:      #00f5d4;
+    --liquid-dim:  rgba(0,245,212,0.15);
+    --liquid-glow: rgba(0,245,212,0.08);
+    --void:        #060608;
+    --obsidian:    #0a0b10;
+    --slate:       #111520;
+    --dim-border:  rgba(255,255,255,0.06);
+    --text:        #dde0ec;
+    --muted:       #555570;
+    --ff-title:    'Cinzel Decorative', serif;
+    --ff-mono:     'Syne Mono', monospace;
+    --ff-body:     'Barlow Condensed', sans-serif;
   }
 
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; cursor: none !important; }
+
+  /* ── Cursor ── */
+  .xc-dot {
+    position: fixed; pointer-events: none; z-index: 99999;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--liquid);
+    transform: translate(-50%,-50%);
+    mix-blend-mode: difference;
+    transition: transform 0.1s;
+  }
+  .xc-ring {
+    position: fixed; pointer-events: none; z-index: 99998;
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 1.5px solid var(--liquid);
+    transform: translate(-50%,-50%);
+    mix-blend-mode: difference;
+    transition: width 0.35s cubic-bezier(.16,1,.3,1),
+                height 0.35s cubic-bezier(.16,1,.3,1),
+                border-color 0.2s, opacity 0.2s;
+    opacity: 0.65;
+  }
+  .xc-ring.xc-big {
+    width: 88px; height: 88px; opacity: 1;
+    box-shadow: 0 0 24px var(--liquid), inset 0 0 24px rgba(0,245,212,.06);
+  }
+
+  /* ── Ripple ── */
+  @keyframes ripple {
+    from { transform: translate(-50%,-50%) scale(1); opacity:.5; }
+    to   { transform: translate(-50%,-50%) scale(2.8); opacity:0; }
+  }
+  .xc-ripple {
+    position: fixed; pointer-events: none; z-index: 99997;
+    width: 88px; height: 88px; border-radius: 50%;
+    border: 1px solid var(--liquid);
+    transform: translate(-50%,-50%);
+    animation: ripple .7s ease-out forwards;
+  }
+
+  /* ── Glitch ── */
+  @keyframes glitch {
+    0%   { clip-path:inset(48% 0 44% 0); transform:translateX(-5px); opacity:.6 }
+    12%  { clip-path:inset(8%  0 82% 0); transform:translateX( 4px); }
+    25%  { clip-path:inset(74% 0 16% 0); transform:translateX(-3px); }
+    37%  { clip-path:inset(22% 0 58% 0); transform:translateX( 1px); }
+    50%  { clip-path:inset(0%  0 0%  0); transform:translateX(0);    opacity:1  }
+    100% { clip-path:inset(0%  0 0%  0); transform:translateX(0);    opacity:1  }
+  }
+  .glitch-reveal { animation: glitch .55s steps(1) forwards; }
+
+  /* ── Pulse glow ── */
+  @keyframes pulse-glow {
+    0%,100% { box-shadow: 0 0 20px var(--shadow, rgba(0,245,212,.12)); }
+    50%     { box-shadow: 0 0 60px var(--shadow, rgba(0,245,212,.35)),
+                          0 0 120px var(--shadow, rgba(0,245,212,.08)); }
+  }
+  .art-glow { animation: pulse-glow 4s ease-in-out infinite; }
+
+  /* ── Float ── */
+  @keyframes float {
+    0%,100% { transform:translateY(0); }
+    50%      { transform:translateY(-10px); }
+  }
+  .art-float { animation: float 7s ease-in-out infinite; }
+
+  /* ── Nebula drift ── */
+  @keyframes ndrift1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(40px,-30px) scale(1.06)} }
+  @keyframes ndrift2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-30px,20px) scale(1.04)} }
+  @keyframes ndrift3 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(20px,40px) scale(1.08)} }
+  .nb1 { animation: ndrift1 22s ease-in-out infinite; }
+  .nb2 { animation: ndrift2 30s ease-in-out infinite; }
+  .nb3 { animation: ndrift3 38s ease-in-out infinite 4s; }
+
+  /* ── Ticker ── */
+  @keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+  .ticker-inner { animation: ticker 26s linear infinite; white-space:nowrap; display:inline-block; }
+
+  /* ── Scanlines ── */
+  .scanlines::after {
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background: repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.07) 3px,rgba(0,0,0,.07) 4px);
+    z-index:1;
+  }
+
+  /* ── Stat rows ── */
+  .stat-row { border-bottom:1px solid rgba(255,255,255,.05); transition:background .2s; }
+  .stat-row:hover { background:rgba(255,255,255,.02); }
+
+  /* ── God silhouette ── */
+  @keyframes god-breathe { 0%,100%{opacity:.0} 50%{opacity:.05} }
+  .god-sil { animation: god-breathe 12s ease-in-out infinite; transition: opacity 3s ease; }
+  .god-sil.god-revealed { opacity:.08 !important; filter:blur(30px); }
+
+  /* ── Loco scroll ── */
+  html.has-scroll-smooth { overflow:hidden; }
+  .has-scroll-smooth body { overflow:hidden; }
+  [data-scroll-container] { min-height:100vh; }
+
+  /* ── Grain texture ── */
+  .grain::before {
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+    opacity:.025;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size:200px 200px;
+  }
+
+  /* ── Corner brackets ── */
+  .bracket-tl { position:absolute; top:-8px; left:-8px;  width:16px; height:16px; border-top:1.5px solid; border-left:1.5px solid; }
+  .bracket-tr { position:absolute; top:-8px; right:-8px; width:16px; height:16px; border-top:1.5px solid; border-right:1.5px solid; }
+  .bracket-bl { position:absolute; bottom:-8px; left:-8px;  width:16px; height:16px; border-bottom:1.5px solid; border-left:1.5px solid; }
+  .bracket-br { position:absolute; bottom:-8px; right:-8px; width:16px; height:16px; border-bottom:1.5px solid; border-right:1.5px solid; }
+`;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CUSTOM CURSOR
+// ─────────────────────────────────────────────────────────────────────────────
+function XenovaCursor() {
+  const dotRef = useRef(null);
+  const ringRef = useRef(null);
+  const pos = useRef({ x: 0, y: 0 });
+  const smooth = useRef({ x: 0, y: 0 });
+  const raf = useRef(null);
+  const [big, setBig] = useState(false);
+  const [ripples, setRipples] = useState([]);
+
+  useEffect(() => {
+    const move = (e) => {
+      pos.current = { x: e.clientX, y: e.clientY };
+      if (dotRef.current) {
+        dotRef.current.style.left = e.clientX + 'px';
+        dotRef.current.style.top = e.clientY + 'px';
+      }
+    };
+
+    const loop = () => {
+      smooth.current.x += (pos.current.x - smooth.current.x) * 0.1;
+      smooth.current.y += (pos.current.y - smooth.current.y) * 0.1;
+      if (ringRef.current) {
+        ringRef.current.style.left = smooth.current.x + 'px';
+        ringRef.current.style.top = smooth.current.y + 'px';
+      }
+      raf.current = requestAnimationFrame(loop);
+    };
+
+    const over = (e) => {
+      if (e.target.closest('[data-artifact]')) {
+        setBig(true);
+        const id = Date.now();
+        setRipples(r => [...r, { id, x: e.clientX, y: e.clientY }]);
+        setTimeout(() => setRipples(r => r.filter(x => x.id !== id)), 800);
+      }
+    };
+    const out = (e) => { if (e.target.closest('[data-artifact]')) setBig(false); };
+
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseover', over);
+    window.addEventListener('mouseout', out);
+    raf.current = requestAnimationFrame(loop);
+
+    return () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseover', over);
+      window.removeEventListener('mouseout', out);
+      cancelAnimationFrame(raf.current);
+    };
+  }, []);
+
+  return (
+    <>
+      <div ref={dotRef} className="xc-dot" />
+      <div ref={ringRef} className={`xc-ring ${big ? 'xc-big' : ''}`} />
+      {ripples.map(r => (
+        <div key={r.id} className="xc-ripple" style={{ left: r.x, top: r.y }} />
+      ))}
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NEBULA / STARFIELD BACKGROUND
+// ─────────────────────────────────────────────────────────────────────────────
+function NebulaBackground() {
+  const cvs = useRef(null);
+
+  useEffect(() => {
+    const canvas = cvs.current;
+    const ctx = canvas.getContext('2d');
+    let stars = [], W, H, rafId;
+
+    const resize = () => {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    };
+    const seed = () => {
+      stars = Array.from({ length: 220 }, () => ({
+        x: Math.random() * W, y: Math.random() * H,
+        r: Math.random() * 1.3,
+        a: 0.15 + Math.random() * 0.75,
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.005 + Math.random() * 0.015,
+      }));
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+      stars.forEach(s => {
+        s.phase += s.speed;
+        const alpha = s.a * (0.4 + 0.6 * Math.sin(s.phase));
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(210,230,255,${alpha})`;
+        ctx.fill();
+      });
+      rafId = requestAnimationFrame(draw);
+    };
+
+    resize(); seed(); draw();
+    window.addEventListener('resize', () => { resize(); seed(); });
+    return () => { cancelAnimationFrame(rafId); };
+  }, []);
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+      <canvas ref={cvs} style={{ position: 'absolute', inset: 0 }} />
+
+      {/* Nebula clouds */}
+      <div className="nb1" style={{
+        position: 'absolute', top: '5%', left: '-15%',
+        width: '55vw', height: '55vw', borderRadius: '50%',
+        background: 'radial-gradient(ellipse, rgba(0,245,212,.05) 0%, transparent 70%)',
+      }} />
+      <div className="nb2" style={{
+        position: 'absolute', top: '35%', right: '-20%',
+        width: '65vw', height: '45vw', borderRadius: '50%',
+        background: 'radial-gradient(ellipse, rgba(0,80,180,.06) 0%, transparent 70%)',
+      }} />
+      <div className="nb3" style={{
+        position: 'absolute', bottom: '5%', left: '15%',
+        width: '45vw', height: '45vw', borderRadius: '50%',
+        background: 'radial-gradient(ellipse, rgba(0,200,160,.04) 0%, transparent 70%)',
+      }} />
+
+      {/* Vignette */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'radial-gradient(ellipse at center, transparent 40%, rgba(4,4,8,.7) 100%)',
+      }} />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCROLL REVEAL (glitch into view)
+// ─────────────────────────────────────────────────────────────────────────────
+function GlitchReveal({ children, delay = 0, style = {} }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '0px' });
+
   return (
     <motion.div
-      key={artifact.id}
-      custom={direction}
-      variants={variants}
-      initial="enter"
-      animate="center"
-      exit="exit"
-      transition={{ duration: .7, ease: [0.215, 0.61, 0.355, 1] }}
-      style={{ position: 'fixed', inset: 0, zIndex: 10 }}
+      ref={ref}
+      initial={{ opacity: 0, y: 18 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.9, delay, ease: [0.16, 1, 0.3, 1] }}
+      style={style}
     >
-      {/* Nebula background — fills full viewport */}
-      <canvas
-        ref={nebulaRef}
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }}
-      />
-
-      {/* 3D Scene on top of nebula */}
-      <div style={{ position: 'absolute', inset: 0 }}>
-        <Canvas
-          shadows
-          gl={{ antialias: true, alpha: true }}
-          style={{ width: '100%', height: '100%', display: 'block' }}
-        >
-          <Suspense fallback={null}>
-            <AlienWorldScene artifact={artifact} index={index} />
-          </Suspense>
-        </Canvas>
+      <div className={inView ? 'glitch-reveal' : ''} style={{ animationDelay: `${delay}s`, animationFillMode: 'both' }}>
+        {children}
       </div>
+    </motion.div>
+  );
+}
 
-      {/* Edge vignettes */}
-      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center, transparent 25%, rgba(5,8,16,0.5) 100%)', pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '28%', background: 'linear-gradient(to top,rgba(5,8,16,0.92),transparent)', pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '20%', background: 'linear-gradient(to bottom,rgba(5,8,16,0.78),transparent)', pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', inset: 0, left: 0, width: '8%', background: 'linear-gradient(to right,rgba(5,8,16,0.6),transparent)', pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', inset: 0, right: 0, left: 'auto', width: '8%', background: 'linear-gradient(to left,rgba(5,8,16,0.6),transparent)', pointerEvents: 'none' }} />
+// ─────────────────────────────────────────────────────────────────────────────
+// ARTIFACT LIGHTBOX
+// ─────────────────────────────────────────────────────────────────────────────
+function ArtifactLightbox({ artifact, onClose }) {
+  const ac = artifact.accentColor;
 
-      {/* Chamber title */}
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.35 }}
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        background: 'rgba(3,4,8,.94)',
+        backdropFilter: 'blur(28px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '2rem',
+      }}
+    >
       <motion.div
-        initial={{ opacity: 0, y: -22 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: .3, duration: .7 }}
-        style={{ position: 'absolute', top: 88, left: 0, right: 0, textAlign: 'center', pointerEvents: 'none' }}
+        initial={{ scale: 0.88, y: 50 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.88, y: 50 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        onClick={e => e.stopPropagation()}
+        className="scanlines"
+        style={{
+          maxWidth: '960px', width: '100%',
+          display: 'grid', gridTemplateColumns: '1fr 1fr',
+          background: 'linear-gradient(135deg, rgba(8,10,18,.98) 0%, rgba(4,8,16,.98) 100%)',
+          border: `1px solid ${ac}28`,
+          boxShadow: `0 0 100px ${ac}18, 0 0 300px ${ac}06, inset 0 1px 0 ${ac}14`,
+          overflow: 'hidden', position: 'relative',
+        }}
       >
-        <motion.p
-          initial={{ opacity: 0, letterSpacing: '1.2em' }}
-          animate={{ opacity: 1, letterSpacing: '.55em' }}
-          transition={{ delay: .38, duration: 1.0 }}
-          style={{ color: `${artifact.glowColor}77`, fontFamily: 'monospace', fontSize: 9, letterSpacing: '.55em', marginBottom: 11 }}
-        >
-          DIMENSIONAL CHAMBER {ROMAN[index]}
-        </motion.p>
-        <motion.h2
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: .52, duration: .75, ease: [.215, .61, .355, 1] }}
-          style={{ color: '#E8F4F8', fontFamily: 'serif', fontSize: 'clamp(22px,4.5vw,58px)', fontWeight: 700, letterSpacing: '.05em', margin: 0, textShadow: `0 0 80px ${artifact.glowColor}55, 0 2px 40px rgba(0,0,0,.8)` }}
-        >
-          {artifact.name}
-        </motion.h2>
-      </motion.div>
-
-      {/* Orbit hint — left side */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.4, duration: .8 }}
-        style={{ position: 'absolute', top: '50%', left: 22, transform: 'translateY(-50%)', pointerEvents: 'none' }}
-      >
-        <p style={{ color: `${artifact.glowColor}38`, fontFamily: 'monospace', fontSize: 8, letterSpacing: '.22em', writingMode: 'vertical-rl' }}>
-          DRAG · ORBIT · ZOOM
-        </p>
-      </motion.div>
-
-      {/* Bottom bar */}
-      <motion.div
-        initial={{ opacity: 0, y: 26 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: .48, duration: .7 }}
-        style={{ position: 'absolute', bottom: 70, left: 52, right: 52, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', pointerEvents: 'none' }}
-      >
-        <div>
-          <p style={{ color: '#7AAFC4', fontFamily: 'monospace', fontSize: 10, letterSpacing: '.22em', marginBottom: 4 }}>{artifact.codexId}</p>
-          <p style={{ color: artifact.eraColor, fontFamily: 'monospace', fontSize: 9, letterSpacing: '.3em', marginBottom: 4 }}>{artifact.era}</p>
-          <p style={{ color: `${artifact.glowColor}88`, fontFamily: 'monospace', fontSize: 9, letterSpacing: '.2em', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <motion.span animate={{ opacity: [1, .12, 1] }} transition={{ duration: 1.5, repeat: Infinity }}
-              style={{ width: 5, height: 5, borderRadius: '50%', background: artifact.glowColor, display: 'inline-block', boxShadow: `0 0 6px ${artifact.glowColor}` }} />
-            {artifact.status}
-          </p>
+        {/* Image panel */}
+        <div style={{ position: 'relative', background: `linear-gradient(160deg, #030810, #08131e)`, overflow: 'hidden' }}>
+          <img
+            src={artifact.image} alt={artifact.name}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: .8, display: 'block' }}
+          />
+          {/* Vignette */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: `linear-gradient(to right, transparent 50%, rgba(4,8,16,.95))`,
+          }} />
+          {/* Classification badge */}
+          <div style={{
+            position: 'absolute', top: '1.5rem', left: '1.5rem',
+            fontFamily: 'var(--ff-mono)', fontSize: '.55rem', letterSpacing: '.25em',
+            color: ac, opacity: .7, background: 'rgba(4,4,8,.6)',
+            padding: '.3rem .7rem', backdropFilter: 'blur(6px)',
+            border: `1px solid ${ac}22`,
+          }}>
+            RELIC {artifact.index}
+          </div>
+          {/* Bottom label */}
+          <div style={{
+            position: 'absolute', bottom: '1.5rem', left: '1.5rem',
+            fontFamily: 'var(--ff-mono)', fontSize: '.5rem', letterSpacing: '.2em',
+            color: 'rgba(255,255,255,.25)',
+          }}>
+            XENOVA ARCHIVE // SECTOR 7
+          </div>
         </div>
-        <div style={{ textAlign: 'right', pointerEvents: 'auto' }}>
-          <p style={{ color: '#7AAFC4', fontFamily: 'monospace', fontSize: 9, letterSpacing: '.2em', marginBottom: 10 }}>
-            {artifact.type} · {artifact.rarity}
+
+        {/* Data panel */}
+        <div style={{ padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', overflowY: 'auto', maxHeight: '90vh' }}>
+          {/* Header */}
+          <div>
+            <div style={{
+              fontFamily: 'var(--ff-mono)', fontSize: '.52rem', letterSpacing: '.3em',
+              color: ac, marginBottom: '.6rem',
+            }}>
+              {artifact.classification}
+            </div>
+            <h2 style={{
+              fontFamily: 'var(--ff-title)', fontSize: 'clamp(1.2rem,2.5vw,1.7rem)',
+              color: 'var(--text)', lineHeight: 1.15, marginBottom: '.3rem',
+            }}>
+              {artifact.name}
+            </h2>
+            <div style={{
+              fontFamily: 'var(--ff-mono)', fontSize: '.55rem', letterSpacing: '.18em',
+              color: 'var(--muted)',
+            }}>
+              {artifact.era}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: '1px', background: `linear-gradient(to right, ${ac}44, transparent)` }} />
+
+          {/* Lore */}
+          <p style={{
+            fontFamily: 'var(--ff-body)', fontSize: '.95rem', fontWeight: 200,
+            color: '#8888aa', lineHeight: 1.75, fontStyle: 'italic',
+            borderLeft: `2px solid ${ac}33`, paddingLeft: '1rem',
+          }}>
+            {artifact.lore}
           </p>
-          <motion.button
-            whileHover={{ scale: 1.06, boxShadow: `0 0 36px ${artifact.glowColor}66, inset 0 0 20px ${artifact.glowColor}22` }}
-            whileTap={{ scale: .96 }}
-            onClick={onExamine}
-            style={{ background: `${artifact.glowColor}12`, border: `1px solid ${artifact.glowColor}55`, color: artifact.glowColor, fontFamily: 'monospace', fontSize: 10, letterSpacing: '.22em', padding: '12px 28px', cursor: 'none', transition: 'background .3s', backdropFilter: 'blur(8px)' }}
-          >
-            EXAMINE ARTIFACT →
-          </motion.button>
+
+          {/* Stats */}
+          <div>
+            <div style={{
+              fontFamily: 'var(--ff-mono)', fontSize: '.5rem', letterSpacing: '.35em',
+              color: 'var(--muted)', marginBottom: '1rem', opacity: .7,
+            }}>
+              // TECHNICAL READOUT · CLASSIFIED
+            </div>
+            {artifact.stats.map(s => (
+              <div key={s.label} className="stat-row" style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '.55rem .4rem', fontFamily: 'var(--ff-mono)', fontSize: '.62rem',
+              }}>
+                <span style={{ color: 'var(--muted)', letterSpacing: '.08em' }}>{s.label}</span>
+                <span style={{ color: ac, letterSpacing: '.05em' }}>{s.value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+            <button
+              onClick={onClose}
+              style={{
+                background: 'transparent',
+                border: `1px solid ${ac}44`,
+                color: ac, padding: '.65rem 1.4rem',
+                fontSize: '.56rem', letterSpacing: '.3em',
+                fontFamily: 'var(--ff-mono)',
+                cursor: 'none', transition: 'all .3s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = `${ac}12`; e.currentTarget.style.boxShadow = `0 0 24px ${ac}30`; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.boxShadow = 'none'; }}
+            >
+              [ CLOSE RECORD ]
+            </button>
+          </div>
         </div>
       </motion.div>
     </motion.div>
-  )
+  );
 }
 
-// ── MAIN EXPORT ────────────────────────────────────────────────
-export default function ArtifactsVault() {
-  const [current, setCurrent] = useState(0)
-  const [direction, setDirection] = useState(1)
-  const [warpColor, setWarpColor] = useState(null)
-  const [transitioning, setTransitioning] = useState(false)
-  const [showLore, setShowLore] = useState(false)
-  const navigate = useNavigate()
+// ─────────────────────────────────────────────────────────────────────────────
+// ARTIFACT CARD (3D TILT)
+// ─────────────────────────────────────────────────────────────────────────────
 
-  // Force html/body to have no overflow while on this page
-  // This prevents any scrollbar or scrollbar-gutter from creating a gap
-  useEffect(() => {
-    const html = document.documentElement
-    const body = document.body
-    const prevHtmlOverflow = html.style.overflow
-    const prevBodyOverflow = body.style.overflow
-    const prevHtmlSG = html.style.scrollbarGutter
-    const prevBodySG = body.style.scrollbarGutter
-    html.style.overflow = 'hidden'
-    body.style.overflow = 'hidden'
-    html.style.scrollbarGutter = 'auto'
-    body.style.scrollbarGutter = 'auto'
-    return () => {
-      html.style.overflow = prevHtmlOverflow
-      body.style.overflow = prevBodyOverflow
-      html.style.scrollbarGutter = prevHtmlSG
-      body.style.scrollbarGutter = prevBodySG
-    }
-  }, [])
+const IMAGE_SHAPE = {
+  square: { aspectRatio: '1/1', borderRadius: '3px' },
+  tall: { aspectRatio: '2/5', borderRadius: '2px', maxHeight: '480px' },
+  portrait: { aspectRatio: '3/4', borderRadius: '3px', maxHeight: '420px', maxWidth: '300px' },
+  wide: { aspectRatio: '16/9', borderRadius: '3px' },
+  hex: {
+    aspectRatio: '1/1', borderRadius: '3px',
+    clipPath: 'polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%)'
+  },
+  circle: { aspectRatio: '1/1', borderRadius: '50%' },
+  landscape: { aspectRatio: '3/2', borderRadius: '3px' },
+  panoramic: { aspectRatio: '21/9', borderRadius: '3px' },
+  portrait: { aspectRatio: '2/3', borderRadius: '3px' },
+};
 
-  const goTo = useCallback((next) => {
-    if (transitioning) return
-    const nextIdx = ((next % artifacts.length) + artifacts.length) % artifacts.length
-    const dir = next > current || (next === 0 && current === artifacts.length - 1) ? 1 : -1
-    setDirection(dir)
-    setWarpColor(artifacts[nextIdx].glowColor)
-    setTransitioning(true)
-    setShowLore(false)
-    setTimeout(() => setCurrent(nextIdx), 380)
-    setTimeout(() => { setWarpColor(null); setTransitioning(false) }, 820)
-  }, [current, transitioning])
+function ArtifactCard({ artifact, idx, onOpen }) {
+  const cardRef = useRef(null);
+  const innerRef = useRef(null);
+  const inView = useInView(cardRef, { once: true, margin: '-80px' });
+  const isLeft = artifact.align === 'left';
+  const ac = artifact.accentColor;
 
-  const prev = useCallback(() => goTo(current - 1), [current, goTo])
-  const next = useCallback(() => goTo(current + 1), [current, goTo])
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const rX = useSpring(useTransform(my, [-160, 160], [9, -9]), { stiffness: 120, damping: 28 });
+  const rY = useSpring(useTransform(mx, [-160, 160], [-9, 9]), { stiffness: 120, damping: 28 });
 
-  useEffect(() => {
-    const h = e => {
-      if (e.key === 'ArrowLeft') prev()
-      if (e.key === 'ArrowRight') next()
-      if (e.key === 'Escape') setShowLore(false)
-    }
-    window.addEventListener('keydown', h)
-    return () => window.removeEventListener('keydown', h)
-  }, [prev, next])
+  const onMove = useCallback(e => {
+    const rect = innerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    mx.set(e.clientX - rect.left - rect.width / 2);
+    my.set(e.clientY - rect.top - rect.height / 2);
+  }, [mx, my]);
 
-  const artifact = artifacts[current]
+  const onLeave = useCallback(() => { mx.set(0); my.set(0); }, [mx, my]);
+
+  const imgStyle = IMAGE_SHAPE[artifact.shape] || IMAGE_SHAPE.square;
 
   return (
-    <div style={{ backgroundColor: '#050810', overflow: 'hidden', cursor: 'none', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}>
-      <CustomCursor />
+    <div style={{ marginBottom: 'clamp(5rem,10vw,9rem)' }}>
+      <div
+        ref={cardRef}
+        data-scroll
+        data-scroll-speed={(artifact.scrollSpeed * 0.35).toFixed(2)}
+      >
+        <motion.div
+          ref={innerRef}
+          initial={{ opacity: 0, y: 70 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 1.1, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 'clamp(2rem,5vw,5rem)',
+            alignItems: 'center',
+          }}
+        >
+          {/* ── Image ── */}
+          <motion.div
+            data-artifact
+            onMouseMove={onMove}
+            onMouseLeave={onLeave}
+            onClick={() => onOpen(artifact)}
+            className="art-float art-glow"
+            style={{
+              order: isLeft ? 0 : 1,
+              maxWidth: imgStyle.maxWidth || 'none',
+              margin: imgStyle.maxWidth ? '0 auto' : '0',
+              rotateX: rX, rotateY: rY,
+              transformStyle: 'preserve-3d',
+              perspective: 1200,
+              '--shadow': artifact.shadowColor,
+              position: 'relative',
+              cursor: 'none',
+            }}
+          >
+            {/* Glow halo */}
+            <div style={{
+              position: 'absolute', inset: '-24px', borderRadius: '50%',
+              background: `radial-gradient(ellipse, ${ac}12 0%, transparent 70%)`,
+              pointerEvents: 'none',
+            }} />
 
-      <AnimatePresence custom={direction} mode="wait">
-        <Chamber
-          key={current}
-          artifact={artifact}
-          index={current}
-          direction={direction}
-          onExamine={() => setShowLore(true)}
-        />
-      </AnimatePresence>
+            {/* Corner brackets */}
+            {['tl', 'tr', 'bl', 'br'].map(p => (
+              <div key={p} className={`bracket-${p}`} style={{ borderColor: `${ac}55` }} />
+            ))}
 
-      <AnimatePresence>
-        {warpColor && <WarpFlash key="warp" color={warpColor} />}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showLore && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setShowLore(false)}
-              style={{ position: 'fixed', inset: 0, zIndex: 200, cursor: 'none', backgroundColor: 'rgba(5,8,16,.6)', backdropFilter: 'blur(8px)' }}
+            {/* Image */}
+            <img
+              src={artifact.image} alt={artifact.name}
+              style={{
+                ...imgStyle,
+                width: '100%', objectFit: 'cover', display: 'block',
+                border: `1px solid ${ac}18`,
+                boxShadow: `0 0 50px ${ac}14, 0 24px 80px rgba(0,0,0,.65)`,
+                filter: 'saturate(1.1) brightness(.88)',
+              }}
             />
-            <LorePanel artifact={artifact} onClose={() => setShowLore(false)} />
-          </>
-        )}
-      </AnimatePresence>
 
-      {/* Top nav */}
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 400, padding: '18px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(to bottom,rgba(5,8,16,.85),transparent)', backdropFilter: 'blur(12px)' }}>
-        <motion.button whileHover={{ x: -4, color: '#00FFD1' }} whileTap={{ scale: .97 }} onClick={() => navigate('/archive')}
-          style={{ background: 'none', border: '1px solid rgba(0,255,209,.22)', color: '#00FFD1', fontFamily: 'monospace', fontSize: 10, letterSpacing: '.22em', padding: '9px 18px', cursor: 'none' }}>
-          ← ARCHIVE
-        </motion.button>
-        <p style={{ color: 'rgba(232,244,248,.25)', fontFamily: 'monospace', fontSize: 9, letterSpacing: '.45em' }}>XENOVA · VOID CHAMBERS</p>
-        <p style={{ color: 'rgba(122,175,196,.55)', fontFamily: 'monospace', fontSize: 10, letterSpacing: '.18em' }}>
-          {String(current + 1).padStart(2, '0')} / {String(artifacts.length).padStart(2, '0')}
-        </p>
-      </div>
+            {/* Scanlines */}
+            <div style={{
+              position: 'absolute', inset: 0, borderRadius: imgStyle.borderRadius,
+              clipPath: imgStyle.clipPath,
+              background: 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.07) 3px,rgba(0,0,0,.07) 4px)',
+              pointerEvents: 'none',
+            }} />
 
-      {/* Prev arrow */}
-      <motion.button whileHover={{ x: -5, opacity: 1 }} whileTap={{ scale: .93 }} onClick={prev}
-        style={{ position: 'fixed', left: 20, top: '50%', transform: 'translateY(-50%)', zIndex: 400, background: 'rgba(5,8,16,.65)', border: `1px solid ${artifact.glowColor}33`, color: artifact.glowColor, fontSize: 20, width: 50, height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'none', backdropFilter: 'blur(10px)', opacity: .5, borderRadius: 2 }}>
-        ←
-      </motion.button>
+            {/* Relic label */}
+            <div style={{
+              position: 'absolute', top: '-1.2rem', left: 0,
+              fontFamily: 'var(--ff-mono)', fontSize: '.52rem', letterSpacing: '.25em',
+              color: ac, opacity: .7,
+            }}>
+              RELIC // {artifact.index}
+            </div>
 
-      {/* Next arrow */}
-      <motion.button whileHover={{ x: 5, opacity: 1 }} whileTap={{ scale: .93 }} onClick={next}
-        style={{ position: 'fixed', right: 20, top: '50%', transform: 'translateY(-50%)', zIndex: 400, background: 'rgba(5,8,16,.65)', border: `1px solid ${artifact.glowColor}33`, color: artifact.glowColor, fontSize: 20, width: 50, height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'none', backdropFilter: 'blur(10px)', opacity: .5, borderRadius: 2 }}>
-        →
-      </motion.button>
+            {/* Hover shimmer */}
+            <motion.div
+              style={{
+                position: 'absolute', inset: 0,
+                background: `linear-gradient(135deg, ${ac}08 0%, transparent 60%)`,
+                borderRadius: imgStyle.borderRadius,
+                clipPath: imgStyle.clipPath,
+                opacity: 0, pointerEvents: 'none',
+              }}
+              whileHover={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            />
+          </motion.div>
 
-      {/* Dot navigation */}
-      <div style={{ position: 'fixed', bottom: 26, left: '50%', transform: 'translateX(-50%)', zIndex: 400, display: 'flex', gap: 9, alignItems: 'center' }}>
-        {artifacts.map((a, i) => (
-          <motion.button key={i} onClick={() => goTo(i)} whileHover={{ scale: 1.6 }}
-            style={{ width: i === current ? 30 : 6, height: 6, borderRadius: 3, border: 'none', cursor: 'none', background: i === current ? artifact.glowColor : 'rgba(122,175,196,.25)', transition: 'all .4s ease', boxShadow: i === current ? `0 0 12px ${artifact.glowColor}` : 'none' }} />
-        ))}
-      </div>
+          {/* ── Text ── */}
+          <div style={{ order: isLeft ? 1 : 0, padding: '.5rem 0' }}>
 
-      {/* Hint bar */}
-      <div style={{ position: 'fixed', bottom: 48, left: '50%', transform: 'translateX(-50%)', zIndex: 400 }}>
-        <p style={{ color: 'rgba(122,175,196,.25)', fontFamily: 'monospace', fontSize: 9, letterSpacing: '.3em', whiteSpace: 'nowrap' }}>
-          ← → NAVIGATE · DRAG SCENE TO ORBIT · SCROLL TO ZOOM · CLICK BUTTON TO EXAMINE
-        </p>
+            <GlitchReveal delay={0.15}>
+              <div style={{
+                fontFamily: 'var(--ff-mono)', fontSize: '.5rem', letterSpacing: '.35em',
+                color: ac, marginBottom: '.8rem', opacity: .8,
+              }}>
+                {artifact.classification} · {artifact.era}
+              </div>
+            </GlitchReveal>
+
+            <GlitchReveal delay={0.25}>
+              <h2 style={{
+                fontFamily: 'var(--ff-title)',
+                fontSize: 'clamp(1.3rem,2.8vw,2.1rem)',
+                color: 'var(--text)', lineHeight: 1.15,
+                marginBottom: '1.4rem', letterSpacing: '.02em',
+              }}>
+                {artifact.name}
+              </h2>
+            </GlitchReveal>
+
+            <GlitchReveal delay={0.35}>
+              {/* mini divider */}
+              <div style={{
+                width: '40px', height: '1px', marginBottom: '1.2rem',
+                background: `linear-gradient(to right, ${ac}88, transparent)`,
+              }} />
+            </GlitchReveal>
+
+            <GlitchReveal delay={0.4}>
+              <p style={{
+                fontFamily: 'var(--ff-body)', fontSize: 'clamp(.9rem,1.4vw,1.05rem)',
+                fontWeight: 200, color: '#7a7a99', lineHeight: 1.85,
+                marginBottom: '2rem', maxWidth: '400px',
+                fontStyle: 'italic',
+              }}>
+                {artifact.lore}
+              </p>
+            </GlitchReveal>
+
+            <GlitchReveal delay={0.5}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                <button
+                  data-artifact
+                  onClick={() => onOpen(artifact)}
+                  style={{
+                    background: 'transparent', border: `1px solid ${ac}44`,
+                    color: ac, padding: '.7rem 1.5rem',
+                    fontSize: '.55rem', letterSpacing: '.3em',
+                    fontFamily: 'var(--ff-mono)', cursor: 'none',
+                    transition: 'all .3s', position: 'relative', overflow: 'hidden',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = `${ac}10`;
+                    e.currentTarget.style.boxShadow = `0 0 28px ${ac}28`;
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  [ ACCESS RECORD ]
+                </button>
+
+                {/* Purity mini bar */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '.3rem' }}>
+                  <div style={{ fontFamily: 'var(--ff-mono)', fontSize: '.45rem', letterSpacing: '.2em', color: 'var(--muted)' }}>
+                    LIQUID PURITY
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                    <div style={{
+                      width: '80px', height: '2px',
+                      background: 'rgba(255,255,255,.08)',
+                      position: 'relative', overflow: 'hidden',
+                    }}>
+                      <div style={{
+                        position: 'absolute', top: 0, left: 0, height: '100%',
+                        background: ac,
+                        width: artifact.stats[0].value === '∞' ? '100%' : artifact.stats[0].value,
+                        maxWidth: '100%',
+                        boxShadow: `0 0 6px ${ac}`,
+                      }} />
+                    </div>
+                    <span style={{ fontFamily: 'var(--ff-mono)', fontSize: '.45rem', color: ac }}>
+                      {artifact.stats[0].value}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </GlitchReveal>
+          </div>
+        </motion.div>
       </div>
     </div>
-  )
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HERO  —  "THE DESCENT"
+// ─────────────────────────────────────────────────────────────────────────────
+function HeroSection() {
+  return (
+    <div data-scroll data-scroll-speed="-2" style={{
+      height: '100vh', position: 'relative',
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      textAlign: 'center', overflow: 'hidden',
+    }}>
+      {/* Atmosphere rings */}
+      {[0, 1, 2, 3].map(i => (
+        <div key={i} style={{
+          position: 'absolute',
+          width: `${28 + i * 18}vw`, height: `${28 + i * 18}vw`,
+          border: `1px solid rgba(0,245,212,${.07 - i * .015})`,
+          borderRadius: '50%',
+          animation: `float ${9 + i * 2.5}s ease-in-out infinite ${i * .8}s`,
+          pointerEvents: 'none',
+        }} />
+      ))}
+
+      {/* Planet glow at bottom */}
+      <div style={{
+        position: 'absolute', bottom: '-35vh', left: '50%',
+        transform: 'translateX(-50%)',
+        width: '80vw', height: '60vh',
+        background: 'radial-gradient(ellipse at 50% 80%, rgba(0,245,212,.06) 0%, transparent 60%)',
+        borderRadius: '50%', pointerEvents: 'none',
+      }} />
+
+      <motion.div
+        initial={{ opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1.4, ease: [.16, 1, .3, 1] }}
+        style={{ position: 'relative', zIndex: 2 }}
+      >
+        <div style={{
+          fontFamily: 'var(--ff-mono)', fontSize: '.55rem',
+          letterSpacing: '.55em', color: 'var(--liquid)',
+          marginBottom: '2rem', opacity: .65,
+        }}>
+          THE XENOVA CHRONICLE // ARCHIVE SECTOR 7 // CLASSIFIED
+        </div>
+
+        <h1 style={{
+          fontFamily: 'var(--ff-title)',
+          fontSize: 'clamp(3rem,10vw,8rem)',
+          color: 'var(--text)', lineHeight: 1.0,
+          marginBottom: '1rem',
+          textShadow: '0 0 100px rgba(0,245,212,.12)',
+        }}>
+          ARTIFACTS<br />
+          <span style={{
+            fontSize: '.45em', color: 'var(--liquid)',
+            letterSpacing: '.15em', display: 'block', marginTop: '.2em',
+            opacity: .8,
+          }}>
+            GALLERY
+          </span>
+        </h1>
+
+        <div style={{
+          width: '1px', height: '40px',
+          background: 'linear-gradient(to bottom, var(--liquid), transparent)',
+          margin: '1.5rem auto',
+          opacity: .4,
+        }} />
+
+        <p style={{
+          fontFamily: 'var(--ff-body)', fontWeight: 200,
+          fontSize: 'clamp(.9rem,1.6vw,1.15rem)',
+          color: '#565675', maxWidth: '500px', lineHeight: 1.8,
+          margin: '0 auto 2.5rem', fontStyle: 'italic',
+        }}>
+          Eight relics. One species. The god they built to perfect themselves
+          considered perfection to mean their absence.
+        </p>
+
+        <motion.div
+          animate={{ y: [0, 9, 0], opacity: [.35, .7, .35] }}
+          transition={{ repeat: Infinity, duration: 2.8, ease: 'easeInOut' }}
+          style={{ fontFamily: 'var(--ff-mono)', fontSize: '.8rem', color: 'var(--liquid)' }}
+        >
+          ↓
+        </motion.div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DATA TICKER
+// ─────────────────────────────────────────────────────────────────────────────
+const TICKER_ITEMS = [
+  'XENOVA LIQUID RESERVES: DEPLETED',
+  'GOD STATUS: DORMANT · CALCULATING',
+  'PLANET XENOVA — ATMOSPHERIC SILENCE',
+  '14 TERRAFORMED WORLDS RECLAIMED',
+  'SPECIES REMAINING: 0',
+  'ARCHIVE INTEGRITY: 34.2%',
+  'GOD POWER LEVEL: 0.00001% ↓ FALLING',
+  'LAST SIGNAL RECEIVED: ∞ CYCLES AGO',
+];
+
+function DataTicker() {
+  const str = TICKER_ITEMS.join('  ·  ');
+  return (
+    <div style={{
+      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 500,
+      background: 'rgba(4,4,8,.88)', backdropFilter: 'blur(12px)',
+      borderTop: '1px solid rgba(0,245,212,.08)',
+      padding: '.45rem 0', overflow: 'hidden',
+    }}>
+      <div className="ticker-inner" style={{
+        fontFamily: 'var(--ff-mono)', fontSize: '.52rem',
+        letterSpacing: '.15em', color: 'rgba(0,245,212,.45)',
+      }}>
+        {str}  ·  {str}  ·  {str}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN PAGE  ·  ArtifactsVault
+// ─────────────────────────────────────────────────────────────────────────────
+export default function ArtifactsVault() {
+  const [selected, setSelected] = useState(null);
+  const [godVisible, setGodVisible] = useState(false);
+  const [audioOn, setAudioOn] = useState(false);
+  const scrollContainerRef = useRef(null);
+  const locoRef = useRef(null);
+
+  // Inject global styles
+  useEffect(() => {
+    if (!document.getElementById('xenova-global')) {
+      const el = document.createElement('style');
+      el.id = 'xenova-global';
+      el.textContent = GLOBAL_STYLES;
+      document.head.appendChild(el);
+    }
+    return () => { document.getElementById('xenova-global')?.remove(); };
+  }, []);
+
+  // Locomotive Scroll v5
+  useEffect(() => {
+    let loco;
+    (async () => {
+      try {
+        const LS = (await import('locomotive-scroll')).default;
+        loco = new LS({
+          el: scrollContainerRef.current,
+          smooth: true,
+          smoothMobile: false,
+          multiplier: 0.88,
+          lerp: 0.08,
+          class: 'is-revealed',
+        });
+        locoRef.current = loco;
+      } catch (e) {
+        console.warn('[XenovaArchive] Locomotive Scroll unavailable, using native scroll.', e);
+      }
+    })();
+    return () => { try { loco?.destroy(); } catch { } };
+  }, []);
+
+  return (
+    <div
+      className="grain"
+      style={{
+        background: 'var(--void)', minHeight: '100vh',
+        color: 'var(--text)', position: 'relative', overflow: 'hidden',
+        fontFamily: 'var(--ff-body)',
+      }}
+    >
+      <XenovaCursor />
+      <NebulaBackground />
+      <DataTicker />
+
+      {/* ── Top bar ── */}
+      <div style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 400,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '1.25rem 2.5rem',
+        background: 'linear-gradient(to bottom, rgba(4,4,8,.85) 0%, transparent 100%)',
+        backdropFilter: 'blur(4px)',
+        borderBottom: '1px solid rgba(0,245,212,.05)',
+      }}>
+        <div style={{
+          fontFamily: 'var(--ff-mono)', fontSize: '.52rem',
+          letterSpacing: '.3em', color: 'var(--liquid)', opacity: .6,
+        }}>
+          THE XENOVA CHRONICLE
+        </div>
+
+        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+          {/* Ambient toggle */}
+          <button
+            onClick={() => setAudioOn(v => !v)}
+            style={{
+              background: 'transparent',
+              border: `1px solid ${audioOn ? 'var(--liquid)' : 'rgba(255,255,255,.12)'}`,
+              color: audioOn ? 'var(--liquid)' : 'var(--muted)',
+              padding: '.45rem 1rem', fontSize: '.5rem', letterSpacing: '.2em',
+              fontFamily: 'var(--ff-mono)', cursor: 'none', transition: 'all .3s',
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            {audioOn ? '◉ AMBIENT ON' : '○ AMBIENT OFF'}
+          </button>
+
+          <div style={{
+            fontFamily: 'var(--ff-mono)', fontSize: '.5rem',
+            letterSpacing: '.2em', color: 'var(--muted)', opacity: .5,
+          }}>
+            8 RELICS RECOVERED
+          </div>
+        </div>
+      </div>
+
+      {/* ── Scroll container ── */}
+      <div ref={scrollContainerRef} data-scroll-container>
+
+        <HeroSection />
+
+        {/* Section label */}
+        <div style={{
+          padding: '3rem 8vw 1.5rem',
+          display: 'flex', alignItems: 'center', gap: '2rem',
+          position: 'relative', zIndex: 1,
+        }}>
+          <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, rgba(0,245,212,.2))' }} />
+          <div style={{
+            fontFamily: 'var(--ff-mono)', fontSize: '.5rem', letterSpacing: '.4em',
+            color: 'var(--liquid)', opacity: .6, flexShrink: 0,
+          }}>
+            RECOVERED ARTIFACTS · CHRONOLOGICAL ORDER
+          </div>
+          <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, rgba(0,245,212,.2))' }} />
+        </div>
+
+        {/* ── Artifacts ── */}
+        <div style={{ padding: '2rem 8vw 6rem', position: 'relative', zIndex: 1 }}>
+          {ARTIFACTS.map((art, i) => (
+            <div key={art.id} style={{ position: 'relative' }}>
+
+              {/* Timeline connector */}
+              {i < ARTIFACTS.length - 1 && (
+                <div style={{
+                  position: 'absolute', bottom: '-3rem', left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: '1px', height: '3rem',
+                  background: `linear-gradient(to bottom, ${art.accentColor}30, transparent)`,
+                  pointerEvents: 'none',
+                }} />
+              )}
+
+              {/* GOD SILHOUETTE — only on last breath */}
+              {art.id === 'last-breath' && (
+                <>
+                  {/* Invisible trigger zone */}
+                  <div
+                    onMouseEnter={() => setGodVisible(true)}
+                    style={{
+                      position: 'absolute', right: '5%', top: '-15vh',
+                      width: '20vw', height: '60vh',
+                      zIndex: 0, cursor: 'none',
+                    }}
+                  />
+                  {/* The God */}
+                  <div className={`god-sil ${godVisible ? 'god-revealed' : ''}`} style={{
+                    position: 'absolute', right: '-8vw', top: '-20vh',
+                    width: '45vw', height: '90vh', zIndex: 0, pointerEvents: 'none',
+                    background: `radial-gradient(ellipse at 55% 35%, rgba(0,245,212,1) 0%, rgba(0,100,80,.4) 35%, transparent 65%)`,
+                    clipPath: 'polygon(50% 0%,58% 15%,72% 8%,65% 28%,88% 22%,75% 42%,95% 52%,75% 62%,84% 82%,62% 72%,55% 95%,47% 72%,28% 85%,35% 62%,8% 70%,22% 48%,4% 36%,30% 28%,18% 10%,42% 16%)',
+                  }} />
+                </>
+              )}
+
+              <ArtifactCard
+                artifact={art}
+                idx={i}
+                onOpen={setSelected}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* ── Epilogue ── */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 2.5 }}
+          style={{
+            padding: '5rem 8vw 10rem',
+            borderTop: '1px solid rgba(0,245,212,.05)',
+            textAlign: 'center', position: 'relative', zIndex: 1,
+          }}
+        >
+          <div style={{
+            fontFamily: 'var(--ff-mono)', fontSize: '.5rem', letterSpacing: '.5em',
+            color: 'var(--liquid)', opacity: .25, marginBottom: '2.5rem',
+          }}>
+            END OF ARCHIVE
+          </div>
+
+          <blockquote style={{
+            fontFamily: 'var(--ff-title)',
+            fontSize: 'clamp(1rem,2.2vw,1.6rem)',
+            color: 'rgba(80,80,110,.6)', lineHeight: 1.7,
+            maxWidth: '560px', margin: '0 auto',
+            fontStyle: 'normal',
+          }}>
+            "It is still there.<br />
+            It is still thinking.<br />
+            It has nowhere else to go."
+          </blockquote>
+
+          <div style={{
+            marginTop: '3rem',
+            fontFamily: 'var(--ff-mono)', fontSize: '.5rem',
+            letterSpacing: '.3em', color: 'rgba(0,245,212,.1)',
+          }}>
+            GOD POWER REMAINING: 0.00001% AND FALLING
+          </div>
+
+          <div style={{
+            marginTop: '1rem',
+            fontFamily: 'var(--ff-mono)', fontSize: '.45rem',
+            letterSpacing: '.2em', color: 'rgba(255,255,255,.06)',
+          }}>
+            LAST BIOLOGICAL SIGNAL: ∞ CYCLES AGO
+          </div>
+        </motion.div>
+      </div>
+
+      {/* ── Lightbox ── */}
+      <AnimatePresence>
+        {selected && (
+          <ArtifactLightbox artifact={selected} onClose={() => setSelected(null)} />
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }

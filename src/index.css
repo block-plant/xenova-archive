@@ -49,14 +49,10 @@ body {
 
 /* ── Scrollbar Styling ── */
 ::-webkit-scrollbar {
-  width: 6px;
+  display: none;
 }
-::-webkit-scrollbar-track {
-  background: var(--void-black);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--bioluminescent-teal);
-  border-radius: 3px;
+* {
+  scrollbar-width: none;
 }
 
 
