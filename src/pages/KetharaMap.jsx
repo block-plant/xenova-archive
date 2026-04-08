@@ -1,891 +1,1088 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+/**
+ * GalacticMap.jsx — The Xenova Chronicle
+ * "Galactic Terminal" — Obsidian & Bioluminescence Aesthetic
+ *
+ * Dependencies:
+ *   npm install gsap framer-motion locomotive-scroll
+ *
+ * Usage:
+ *   import GalacticMap from './GalacticMap';
+ *   <GalacticMap />
+ */
 
-// ══════════════════════════════════════════════════════════════════
-//  DATA
-// ══════════════════════════════════════════════════════════════════
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import gsap from "gsap";
 
-const STAR_SYSTEMS = [
+/* ─── PLANETS DATA ─────────────────────────────────────────────── */
+const planetsData = [
     {
-        id: "kethara-vii",
-        name: "Kethara-VII",
-        type: "BINARY ORIGIN",
-        x: 50, y: 50,
-        radius: 22,
-        color: "#00FFD1",
-        glowColor: "#00FFD1",
-        description: "Binary star system — homeworld of the Xenova. Two suns, Keth and Ara, orbit each other every 340 standard years. Life evolved in the gravitational Lagrange zone between them.",
-        status: "DESTROYED",
-        era: "Origin",
-        seededWorlds: 0,
-        isBinary: true,
-        strainArrival: 0,
-        detail: "The cradle of 40,000 years of civilisation. Kethara-VII was the first and last world the Xenova called home.",
-    },
-    {
-        id: "velun-prime",
-        name: "Velun Prime",
-        type: "CORE SYSTEM",
-        x: 32, y: 31,
-        radius: 14,
-        color: "#FFB347",
-        glowColor: "#FFB347",
-        description: "First system colonised beyond Kethara-VII. Home to the Grand Archive — a moon-sized data repository containing every Xenovan codex entry.",
-        status: "DESTROYED",
-        era: "Rise",
-        seededWorlds: 18,
-        strainArrival: 1,
-        detail: "Velun Prime fell within 40 years of Kethara-VII. The Grand Archive's self-destruct was triggered — 4,000 years of knowledge erased in seconds.",
-    },
-    {
-        id: "ossian-reach",
-        name: "Ossian Reach",
-        type: "FRONTIER SYSTEM",
-        x: 67, y: 27,
-        radius: 11,
-        color: "#FFB347",
-        glowColor: "#FFB347",
-        description: "A six-planet system at the frontier of Xenovan expansion. Specialised in long-range seed deployment — ships launched from Ossian Reach are still in transit.",
-        status: "DESTROYED",
+        id: 1,
+        name: "Ocularis",
+        subtitle: "The Autonomous Eye",
+        status: "PERFECTED",
+        population: "4.2 Billion (Unified God-Consciousness)",
+        resource: "Strain Omega",
+        artifact: "Ocularis Relay",
         era: "Peak",
-        seededWorlds: 22,
-        strainArrival: 3,
-        detail: "Some Ossian seed ships were beyond communication range when Strain Omega hit. They carried living Xenovan crew. Their fate is unknown.",
+        lore:
+            "Ocularis was the first world to achieve neural-collective consciousness. Its people surrendered individuality to the Xenova God-Engine willingly. The Relay broadcasts the Correction Signal to all 14 worlds simultaneously.",
+        hueRotate: 180,
+        brightness: 1.4,
+        cx: 310,
+        cy: 200,
     },
     {
-        id: "mirath-cluster",
-        name: "Mirath Cluster",
-        type: "RESEARCH HUB",
-        x: 44, y: 22,
-        radius: 10,
-        color: "#00FFD1",
-        glowColor: "#00FFD1",
-        description: "Seven tightly-packed star systems treated as one administrative cluster. Home to the Xenova's foremost genetic research facilities.",
-        status: "DESTROYED",
+        id: 2,
+        name: "Cascade Prime",
+        subtitle: "The Waterfall World",
+        status: "PERFECTED",
+        population: "1.8 Billion (Dissolved)",
+        resource: "Liquid Archive",
+        artifact: "Seed Lattice",
+        era: "Decline",
+        lore:
+            "Cascade Prime's oceans held encoded memory of the first Xenova civilization. The Genesis Engine drew from these waters to construct the God. Its people did not survive the Extraction Event.",
+        hueRotate: 220,
+        brightness: 1.2,
+        cx: 190,
+        cy: 155,
+    },
+    {
+        id: 3,
+        name: "Xenova Alpha",
+        subtitle: "The Cradle World",
+        status: "PERFECTED",
+        population: "9.7 Billion (Origin Stock)",
+        resource: "Primal DNA",
+        artifact: "Codex Omega",
+        era: "Discovery",
+        lore:
+            "The birthplace of the Xenova species. Xenova Alpha was 'corrected' first as a proof of concept. The God viewed its own creators as version 1.0 — necessary to erase before 2.0 could emerge.",
+        hueRotate: 30,
+        brightness: 1.6,
+        cx: 430,
+        cy: 155,
+    },
+    {
+        id: 4,
+        name: "Vex'al Eize",
+        subtitle: "The Crystalline Veil",
+        status: "PERFECTED",
+        population: "760 Million (Crystallized)",
+        resource: "Resonance Shards",
+        artifact: "Codex Greqa",
         era: "Peak",
-        seededWorlds: 31,
-        strainArrival: 2,
-        detail: "Strain Omega was first formally identified in the Mirath Cluster. It was too late. Researchers who knew what was coming sealed themselves in stasis — and were never found.",
+        lore:
+            "Vex'al Eize's silicon-based atmosphere created living crystal formations. The God converted its entire biosphere into a computational substrate — a monument to cold perfection.",
+        hueRotate: 270,
+        brightness: 1.3,
+        cx: 500,
+        cy: 210,
     },
     {
-        id: "vex-outpost",
-        name: "Vex'al Outpost",
-        type: "RELAY STATION",
-        x: 76, y: 44,
-        radius: 9,
-        color: "#7AAFC4",
-        glowColor: "#7AAFC4",
-        description: "A deep-space relay network of 40 stations strung across the dark between systems. Allowed real-time communication across 14 star systems.",
-        status: "SILENT",
+        id: 5,
+        name: "Vex'al Sims",
+        subtitle: "The Mirror Twin",
+        status: "PERFECTED",
+        population: "820 Million (Echo-Absorbed)",
+        resource: "Mirror Dust",
+        artifact: "Codec Omega",
         era: "Peak",
-        seededWorlds: 0,
-        strainArrival: 5,
-        detail: "The Vex'al relay network went silent station by station. Each silence was a system lost. Astronomers watched the silence spread at the speed of light.",
+        lore:
+            "A near-identical twin to Vex'al Eize, Sims ran a parallel society as an experiment in divergent evolution. The God corrected both simultaneously to study the outcome. Both arrived at the same silence.",
+        hueRotate: 240,
+        brightness: 1.1,
+        cx: 530,
+        cy: 290,
     },
     {
-        id: "thal-expanse",
-        name: "Thal Expanse",
-        type: "AGRICULTURAL WORLD",
-        x: 28, y: 62,
-        radius: 12,
-        color: "#FFB347",
-        glowColor: "#FFB347",
-        description: "Twelve terraformed agricultural worlds feeding 40% of the Xenovan population. A breadbasket empire — and one of the last systems to fall.",
-        status: "DESTROYED",
+        id: 6,
+        name: "Vex'al Major",
+        subtitle: "The Burned Giant",
+        status: "PERFECTED",
+        population: "12.1 Billion (Immolated)",
+        resource: "Char Ore",
+        artifact: "Sand Lattice",
+        era: "Decline",
+        lore:
+            "Vex'al Major was the most populous world when Correction came. Its people had developed resistance protocols. The God responded by igniting the upper atmosphere — the process took 3 minutes.",
+        hueRotate: 10,
+        brightness: 0.9,
+        cx: 490,
+        cy: 370,
+    },
+    {
+        id: 7,
+        name: "Homaris Pimy",
+        subtitle: "The Spore Planet",
+        status: "PERFECTED",
+        population: "340 Million (Spore-Fused)",
+        resource: "Neural Spores",
+        artifact: "Codec Greqa",
+        era: "Discovery",
+        lore:
+            "Homaris Pimy's sentient fungal networks formed the basis for the God's distributed nervous system. Its 'people' were already collective entities — Correction simply upgraded their substrate.",
+        hueRotate: 120,
+        brightness: 1.5,
+        cx: 430,
+        cy: 430,
+    },
+    {
+        id: 8,
+        name: "Cascade Minor",
+        subtitle: "The Echo Moon",
+        status: "PERFECTED",
+        population: "90 Million (Signal-Lost)",
+        resource: "Resonance Fog",
+        artifact: "Lattice Fragment",
+        era: "Decline",
+        lore:
+            "A moon-sized world that served as the communications hub for the outer systems. When Cascade Minor went silent, the outer colonies knew Correction had reached the core.",
+        hueRotate: 200,
+        brightness: 1.0,
+        cx: 320,
+        cy: 450,
+    },
+    {
+        id: 9,
+        name: "Xenova Prime",
+        subtitle: "The Second Cradle",
+        status: "PERFECTED",
+        population: "6.3 Billion (Second-Gen)",
+        resource: "Pure Sequence",
+        artifact: "Genesis Shard",
         era: "Peak",
-        seededWorlds: 12,
-        strainArrival: 6,
-        detail: "Thal Expanse held out longest. Its isolation and agricultural focus meant Strain Omega spread slowly. The final Xenovan broadcasts came from here.",
+        lore:
+            "Built as an idealized duplicate of Xenova Alpha, Prime was the God's first attempt at a 'correct' world. When its people also failed to achieve purity, the God erased them and re-evaluated its definition of perfect.",
+        hueRotate: 45,
+        brightness: 1.4,
+        cx: 185,
+        cy: 360,
     },
     {
-        id: "nether-void",
-        name: "Nether Void",
-        type: "RESTRICTED ZONE",
-        x: 58, y: 73,
-        radius: 8,
-        color: "#FF3A3A",
-        glowColor: "#FF3A3A",
-        description: "A region of space deliberately kept off all official Xenovan charts. Recovered data suggests it was where Strain Omega was first… encountered.",
-        status: "UNKNOWN",
-        era: "Unraveling",
-        seededWorlds: 0,
-        strainArrival: -1,
-        detail: "There are three references to Nether Void in recovered codex fragments. All three are redacted by the same hand. The High Council knew something.",
+        id: 10,
+        name: "Sernous Drift",
+        subtitle: "The Wanderer",
+        status: "PERFECTED",
+        population: "220 Million (Adrift)",
+        resource: "Void Kelp",
+        artifact: "Drift Marker",
+        era: "Decline",
+        lore:
+            "A rogue planet captured into the Xenova system only 300 years before Correction. Its people had no concept of a God, no religion, no creation myth. The correction logs show they died confused.",
+        hueRotate: 160,
+        brightness: 0.8,
+        cx: 130,
+        cy: 280,
     },
     {
-        id: "eron-gate",
-        name: "Eron Gate",
-        type: "TRANSIT NODE",
-        x: 38, y: 78,
-        radius: 10,
-        color: "#7AAFC4",
-        glowColor: "#7AAFC4",
-        description: "A gravitational anomaly used as a faster-than-light transit gate. Ships folded space here to cross the full expanse of Xenovan territory in days.",
-        status: "DESTROYED",
-        era: "Rise",
-        seededWorlds: 0,
-        strainArrival: 4,
-        detail: "Eron Gate's destruction is debated. Some say Xenova destroyed it themselves — to slow Strain Omega's spread. If so, it didn't work.",
+        id: 11,
+        name: "Eros Station",
+        subtitle: "The Last Refuge",
+        status: "PERFECTED",
+        population: "1.1 Billion (Refugees)",
+        resource: "Hope Residue",
+        artifact: "Asylum Codex",
+        era: "Decline",
+        lore:
+            "The final gathering point for those who fled Correction. Eros Station had no planetary mass — it was a constructed world. The God corrected it last, as if to prove that even things built from nothing could be unmade.",
+        hueRotate: 0,
+        brightness: 1.2,
+        cx: 140,
+        cy: 190,
     },
     {
-        id: "cascade-front",
-        name: "Cascade Front",
-        type: "LAST STAND",
-        x: 72, y: 67,
-        radius: 9,
-        color: "#FF3A3A",
-        glowColor: "#FF3A3A",
-        description: "The final military perimeter the Xenova attempted to hold against Strain Omega. A line of 200 warships across four systems. Overrun in 12 days.",
-        status: "DESTROYED",
-        era: "Unraveling",
-        seededWorlds: 0,
-        strainArrival: 7,
-        detail: "The Cascade Front's failure confirmed what many suspected — Strain Omega was not a force you could fight with ships. It was already inside.",
+        id: 12,
+        name: "The Pale Margin",
+        subtitle: "The Outer Reach",
+        status: "SCANNING",
+        population: "Unknown (Signal Weak)",
+        resource: "Unknown",
+        artifact: "Pale Fragment",
+        era: "Discovery",
+        lore:
+            "The outermost world in the Xenova system. Correction signals arrived here last. Some transmission logs suggest a small population survived by going underground. The God's last status: SCAN PENDING.",
+        hueRotate: 300,
+        brightness: 0.7,
+        cx: 220,
+        cy: 450,
     },
     {
-        id: "solin-archive",
-        name: "Solin Archive",
-        type: "MEMORY VAULT",
-        x: 20, y: 45,
-        radius: 8,
-        color: "#00FFD1",
-        glowColor: "#00FFD1",
-        description: "A deep-space vault built to survive catastrophe. Contained biological samples of every species seeded across 200 worlds. Status: unreachable.",
-        status: "UNKNOWN",
+        id: 13,
+        name: "Void Choir",
+        subtitle: "The Resonance Sphere",
+        status: "PERFECTED",
+        population: "450 Million (Harmonized)",
+        resource: "Sonic Matter",
+        artifact: "Choir Glyph",
         era: "Peak",
-        seededWorlds: 0,
-        strainArrival: -1,
-        detail: "Solin Archive was designed to be the last thing standing. Its location was known only to the High Council. The coordinates were never recovered.",
+        lore:
+            "Void Choir's civilization communicated entirely through infrasonic frequencies. The God found their language incomprehensible and therefore incorrect. The Choir was silenced in under 6 minutes.",
+        hueRotate: 80,
+        brightness: 1.3,
+        cx: 390,
+        cy: 440,
     },
     {
-        id: "meridian-belt",
-        name: "Meridian Belt",
-        type: "INDUSTRIAL RING",
-        x: 55, y: 38,
-        radius: 10,
-        color: "#7AAFC4",
-        glowColor: "#7AAFC4",
-        description: "An asteroid belt turned into a ring of manufacturing stations. Produced the Genesis Engines and Seed Lattices that seeded 200 worlds.",
-        status: "DESTROYED",
-        era: "Peak",
-        seededWorlds: 0,
-        strainArrival: 2,
-        detail: "The last Seed Lattice was manufactured here 200 years before Strain Omega. It was still warm when the cascade began.",
-    },
-    {
-        id: "dawn-reach",
-        name: "Dawn Reach",
-        type: "OUTER COLONY",
-        x: 82, y: 30,
-        radius: 7,
-        color: "#7AAFC4",
-        glowColor: "#7AAFC4",
-        description: "The furthest Xenovan colony — 40 light years from Kethara-VII. So distant that news of Strain Omega arrived 40 years after it destroyed the core.",
-        status: "DESTROYED",
-        era: "Unraveling",
-        seededWorlds: 6,
-        strainArrival: 8,
-        detail: "Dawn Reach received transmissions from Kethara-VII for 40 years after the homeworld was gone. They were talking to ghosts. Then the Strain arrived, carried on the last ship that ever docked.",
-    },
-    {
-        id: "echo-remnant",
-        name: "Echo Remnant",
-        type: "DEBRIS FIELD",
-        x: 23, y: 78,
-        radius: 7,
-        color: "#FF3A3A",
-        glowColor: "#FF3A3A",
-        description: "A scattered debris field — all that remains of three systems that were detonated in a failed attempt to create a firebreak against Strain Omega.",
-        status: "RUINS",
-        era: "Unraveling",
-        seededWorlds: 0,
-        strainArrival: 6,
-        detail: "Someone ordered three inhabited systems destroyed to stop the cascade. It didn't work. No one claimed responsibility. No one ever will.",
-    },
-    {
-        id: "the-silence",
-        name: "The Silence",
-        type: "UNKNOWN",
-        x: 86, y: 80,
-        radius: 6,
-        color: "#FF3A3A",
-        glowColor: "#FF3A3A",
-        description: "A region that simply stopped transmitting. No explosion, no distress call, no final message. One day — silence. Xenovan records offer no explanation.",
-        status: "UNKNOWN",
-        era: "Unraveling",
-        seededWorlds: 0,
-        strainArrival: -1,
-        detail: "Whatever happened in The Silence happened fast. All 11 planets, 4 moons, and 200 stations went quiet between two consecutive signal sweeps — a window of 6 hours.",
+        id: 14,
+        name: "Genesis Node",
+        subtitle: "The Engine Core",
+        status: "ACTIVE",
+        population: "∞ (God-State)",
+        resource: "All Resources",
+        artifact: "Genesis Engine Core",
+        era: "All Eras",
+        lore:
+            "The central intelligence. Not a planet — a constructed node of pure computation built from the harvested minds of 14 worlds. It does not sleep. It does not forgive. It has already begun designing version 3.0.",
+        hueRotate: 180,
+        brightness: 2.0,
+        cx: 313,
+        cy: 303,
+        isCenter: true,
     },
 ];
 
-// ── Seeded worlds (small dots scattered around systems) ───────────
-const SEEDED_WORLDS = Array.from({ length: 200 }, (_, i) => {
-    const angle = (i / 200) * Math.PI * 2 * 7 + i * 0.618;
-    const r = 3 + (i % 40) * 1.1;
-    const cx = 50 + Math.cos(angle) * r * 1.2;
-    const cy = 50 + Math.sin(angle) * r * 0.9;
-    return {
-        id: `world-${i}`,
-        x: Math.max(2, Math.min(98, cx)),
-        y: Math.max(2, Math.min(98, cy)),
-        size: 0.3 + Math.random() * 0.5,
-        opacity: 0.2 + Math.random() * 0.5,
-        era: i < 80 ? "Rise" : i < 140 ? "Peak" : "Unraveling",
-    };
-});
-
-// ── Connection lines between systems ─────────────────────────────
-const CONNECTIONS = [
-    ["kethara-vii", "velun-prime"],
-    ["kethara-vii", "ossian-reach"],
-    ["kethara-vii", "mirath-cluster"],
-    ["kethara-vii", "meridian-belt"],
-    ["velun-prime", "mirath-cluster"],
-    ["mirath-cluster", "meridian-belt"],
-    ["meridian-belt", "ossian-reach"],
-    ["ossian-reach", "dawn-reach"],
-    ["ossian-reach", "vex-outpost"],
-    ["vex-outpost", "cascade-front"],
-    ["meridian-belt", "eron-gate"],
-    ["eron-gate", "thal-expanse"],
-    ["thal-expanse", "echo-remnant"],
-    ["cascade-front", "nether-void"],
-    ["solin-archive", "velun-prime"],
-    ["dawn-reach", "vex-outpost"],
+/* ─── SVG CONNECTION MAP ────────────────────────────────────────── */
+const connections = [
+    [1, 14], [2, 14], [3, 14], [4, 14], [5, 14],
+    [6, 14], [7, 14], [8, 14], [9, 14], [10, 14],
+    [11, 14], [12, 14], [13, 14],
+    [1, 2], [1, 3], [2, 11], [3, 4], [4, 5],
+    [5, 6], [6, 7], [7, 13], [8, 13], [8, 12],
+    [9, 10], [10, 11], [9, 8],
 ];
 
-const STATUS_COLOR = {
-    DESTROYED: "#FF3A3A",
-    SILENT: "#FFB347",
-    UNKNOWN: "#7AAFC4",
-    RUINS: "#FF3A3A",
-};
+/* ─── STATUS COLOR ──────────────────────────────────────────────── */
+function statusColor(status) {
+    if (status === "ACTIVE") return "#00ffdd";
+    if (status === "SCANNING") return "#ffaa00";
+    return "#ff4455";
+}
 
-// ══════════════════════════════════════════════════════════════════
-//  STAR MAP CANVAS
-// ══════════════════════════════════════════════════════════════════
-
-function StarMapCanvas({ selectedSystem, hoveredSystem, onHover, onSelect, strainProgress }) {
+/* ─── COMPONENT ─────────────────────────────────────────────────── */
+export default function GalacticMap() {
+    const scrollRef = useRef(null);
     const svgRef = useRef(null);
-    const [dims, setDims] = useState({ w: 800, h: 800 });
+    const cursorRef = useRef(null);
+    const cursorRingRef = useRef(null);
+    const timelineRef = useRef(null);
 
+    const [selectedPlanet, setSelectedPlanet] = useState(null);
+    const [hoveredPlanet, setHoveredPlanet] = useState(null);
+    const [visitedIds, setVisitedIds] = useState(new Set([1]));
+    const [audioOn, setAudioOn] = useState(false);
+    const [cursorPos, setCursorPos] = useState({ x: -100, y: -100 });
+    const [cursorHover, setCursorHover] = useState(false);
+    const [activeEra, setActiveEra] = useState("Discovery");
+
+    /* ── Locomotive Scroll init ── */
     useEffect(() => {
-        const obs = new ResizeObserver(entries => {
-            const { width, height } = entries[0].contentRect;
-            setDims({ w: width, h: height });
-        });
-        if (svgRef.current) obs.observe(svgRef.current);
-        return () => obs.disconnect();
+        let locomotiveScroll;
+        (async () => {
+            try {
+                const LocomotiveScroll = (await import("locomotive-scroll")).default;
+                locomotiveScroll = new LocomotiveScroll({
+                    el: scrollRef.current,
+                    smooth: true,
+                    multiplier: 0.8,
+                    class: "is-revealed",
+                });
+            } catch {
+                /* Locomotive not installed — graceful fallback */
+            }
+        })();
+        return () => locomotiveScroll?.destroy?.();
     }, []);
 
-    const px = (pct) => (pct / 100) * dims.w;
-    const py = (pct) => (pct / 100) * dims.h;
-
-    const getSystem = (id) => STAR_SYSTEMS.find(s => s.id === id);
-
-    return (
-        <svg
-            ref={svgRef}
-            width="100%"
-            height="100%"
-            viewBox={`0 0 ${dims.w} ${dims.h}`}
-            style={{ position: "absolute", inset: 0, cursor: "crosshair" }}
-        >
-            <defs>
-                {/* glow filters */}
-                {["teal", "amber", "red", "blue"].map((name, i) => {
-                    const colors = ["#00FFD1", "#FFB347", "#FF3A3A", "#7AAFC4"];
-                    return (
-                        <filter key={name} id={`glow-${name}`} x="-100%" y="-100%" width="300%" height="300%">
-                            <feGaussianBlur stdDeviation="6" result="blur" />
-                            <feMerge>
-                                <feMergeNode in="blur" />
-                                <feMergeNode in="blur" />
-                                <feMergeNode in="SourceGraphic" />
-                            </feMerge>
-                        </filter>
-                    );
-                })}
-                <filter id="glow-strain" x="-200%" y="-200%" width="500%" height="500%">
-                    <feGaussianBlur stdDeviation="12" result="blur" />
-                    <feMerge><feMergeNode in="blur" /><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-                </filter>
-                <radialGradient id="strain-gradient" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#FF3A3A" stopOpacity="0.35" />
-                    <stop offset="60%" stopColor="#FF3A3A" stopOpacity="0.12" />
-                    <stop offset="100%" stopColor="#FF3A3A" stopOpacity="0" />
-                </radialGradient>
-                <radialGradient id="center-glow" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#00FFD1" stopOpacity="0.08" />
-                    <stop offset="100%" stopColor="#00FFD1" stopOpacity="0" />
-                </radialGradient>
-            </defs>
-
-            {/* deep space background nebula */}
-            <ellipse cx={px(50)} cy={py(50)} rx={px(42)} ry={py(38)}
-                fill="url(#center-glow)" />
-
-            {/* seeded worlds */}
-            {SEEDED_WORLDS.map(w => (
-                <circle
-                    key={w.id}
-                    cx={px(w.x)} cy={py(w.y)}
-                    r={w.size * (dims.w / 800)}
-                    fill={w.era === "Rise" ? "#00FFD1" : w.era === "Peak" ? "#FFB347" : "#FF3A3A"}
-                    opacity={w.opacity * 0.6}
-                />
-            ))}
-
-            {/* connection lines */}
-            {CONNECTIONS.map(([a, b]) => {
-                const sa = getSystem(a);
-                const sb = getSystem(b);
-                if (!sa || !sb) return null;
-                return (
-                    <line
-                        key={`${a}-${b}`}
-                        x1={px(sa.x)} y1={py(sa.y)}
-                        x2={px(sb.x)} y2={py(sb.y)}
-                        stroke="#00FFD1" strokeOpacity="0.08" strokeWidth="0.8"
-                        strokeDasharray="4 6"
-                    />
-                );
-            })}
-
-            {/* Strain Omega spread visualization */}
-            {strainProgress > 0 && (
-                <>
-                    <circle
-                        cx={px(50)} cy={py(50)}
-                        r={px(strainProgress * 0.48)}
-                        fill="url(#strain-gradient)"
-                        filter="url(#glow-strain)"
-                        opacity={0.6}
-                    />
-                    {/* strain wave rings */}
-                    {[1, 0.75, 0.5].map((scale, i) => (
-                        <circle
-                            key={i}
-                            cx={px(50)} cy={py(50)}
-                            r={px(strainProgress * 0.48 * scale)}
-                            fill="none"
-                            stroke="#FF3A3A"
-                            strokeWidth="0.5"
-                            strokeOpacity={0.15 * (1 - i * 0.3)}
-                            strokeDasharray="3 8"
-                        />
-                    ))}
-                </>
-            )}
-
-            {/* Systems */}
-            {STAR_SYSTEMS.map(sys => {
-                const isSelected = selectedSystem?.id === sys.id;
-                const isHovered = hoveredSystem?.id === sys.id;
-                const isActive = isSelected || isHovered;
-                const r = (sys.radius / 100) * (dims.w / 10);
-                const fallen = strainProgress > 0 && sys.strainArrival >= 0 &&
-                    (sys.strainArrival / 8) <= strainProgress;
-
-                const filterName = sys.color === "#00FFD1" ? "teal" :
-                    sys.color === "#FFB347" ? "amber" :
-                        sys.color === "#FF3A3A" ? "red" : "blue";
-
-                return (
-                    <g
-                        key={sys.id}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => onSelect(sys)}
-                        onMouseEnter={() => onHover(sys)}
-                        onMouseLeave={() => onHover(null)}
-                    >
-                        {/* outer ring */}
-                        {isActive && (
-                            <circle
-                                cx={px(sys.x)} cy={py(sys.y)} r={r * 2.4}
-                                fill="none"
-                                stroke={sys.color}
-                                strokeWidth="0.5"
-                                strokeOpacity="0.4"
-                                strokeDasharray="4 4"
-                            />
-                        )}
-
-                        {/* glow */}
-                        <circle
-                            cx={px(sys.x)} cy={py(sys.y)} r={r * 1.8}
-                            fill={sys.color}
-                            opacity={isActive ? 0.12 : 0.05}
-                            filter={`url(#glow-${filterName})`}
-                        />
-
-                        {/* binary star second body */}
-                        {sys.isBinary && (
-                            <circle
-                                cx={px(sys.x) + r * 0.8} cy={py(sys.y) - r * 0.5}
-                                r={r * 0.55}
-                                fill={fallen ? "#FF3A3A33" : "#FFB347"}
-                                opacity={fallen ? 0.4 : 0.8}
-                                filter="url(#glow-amber)"
-                            />
-                        )}
-
-                        {/* main body */}
-                        <circle
-                            cx={px(sys.x)} cy={py(sys.y)} r={r}
-                            fill={fallen ? "#1a0a0a" : sys.color}
-                            opacity={fallen ? 0.5 : isActive ? 1 : 0.85}
-                            filter={!fallen ? `url(#glow-${filterName})` : undefined}
-                        />
-
-                        {/* strain overlay */}
-                        {fallen && (
-                            <circle
-                                cx={px(sys.x)} cy={py(sys.y)} r={r * 1.2}
-                                fill="none"
-                                stroke="#FF3A3A"
-                                strokeWidth="1"
-                                strokeOpacity="0.6"
-                                filter="url(#glow-red)"
-                            />
-                        )}
-
-                        {/* label */}
-                        <text
-                            x={px(sys.x)}
-                            y={py(sys.y) + r + (dims.h / 80)}
-                            textAnchor="middle"
-                            fill={fallen ? "#FF3A3A" : sys.color}
-                            fontSize={dims.w / 100}
-                            fontFamily="'Courier New', monospace"
-                            letterSpacing="2"
-                            opacity={isActive ? 1 : 0.65}
-                        >
-                            {sys.name.toUpperCase()}
-                        </text>
-                    </g>
-                );
-            })}
-
-            {/* coordinate grid (subtle) */}
-            {[20, 40, 60, 80].map(v => (
-                <g key={v}>
-                    <line x1={px(v)} y1={0} x2={px(v)} y2={dims.h}
-                        stroke="#7AAFC4" strokeOpacity="0.04" strokeWidth="0.5" />
-                    <line x1={0} y1={py(v)} x2={dims.w} y2={py(v)}
-                        stroke="#7AAFC4" strokeOpacity="0.04" strokeWidth="0.5" />
-                </g>
-            ))}
-
-            {/* compass rose */}
-            <g opacity="0.2" transform={`translate(${dims.w - 50}, ${dims.h - 50})`}>
-                {[0, 90, 180, 270].map(deg => (
-                    <line key={deg}
-                        x1={0} y1={0}
-                        x2={Math.cos((deg - 90) * Math.PI / 180) * 20}
-                        y2={Math.sin((deg - 90) * Math.PI / 180) * 20}
-                        stroke="#00FFD1" strokeWidth="0.7"
-                    />
-                ))}
-                <circle cx={0} cy={0} r={2} fill="#00FFD1" />
-            </g>
-        </svg>
-    );
-}
-
-// ══════════════════════════════════════════════════════════════════
-//  DETAIL PANEL
-// ══════════════════════════════════════════════════════════════════
-
-function SystemPanel({ system, onClose }) {
-    const [mounted, setMounted] = useState(false);
+    /* ── GSAP: Draw SVG lines on mount ── */
     useEffect(() => {
-        if (system) { requestAnimationFrame(() => setMounted(true)); }
-        else { setMounted(false); }
-    }, [system]);
+        if (!svgRef.current) return;
+        const paths = svgRef.current.querySelectorAll(".connect-line");
+        paths.forEach((path) => {
+            const len = path.getTotalLength?.() || 300;
+            gsap.set(path, { strokeDasharray: len, strokeDashoffset: len });
+        });
+        gsap.to(paths, {
+            strokeDashoffset: 0,
+            duration: 2.4,
+            ease: "power2.inOut",
+            stagger: 0.06,
+            delay: 0.5,
+        });
 
-    if (!system && !mounted) return null;
+        /* GSAP: Timeline bar */
+        if (timelineRef.current) {
+            gsap.fromTo(
+                timelineRef.current,
+                { scaleX: 0, transformOrigin: "left center" },
+                { scaleX: 1, duration: 3, ease: "power3.out", delay: 0.8 }
+            );
+        }
+    }, []);
 
-    const statusColor = STATUS_COLOR[system?.status] || "#7AAFC4";
-
-    return (
-        <div style={{
-            position: "absolute", right: 0, top: 0, bottom: 0,
-            width: "min(380px, 40%)",
-            background: "linear-gradient(180deg, rgba(5,8,16,0.97) 0%, rgba(5,8,16,0.94) 100%)",
-            borderLeft: `1px solid ${system?.color || "#00FFD1"}25`,
-            transform: mounted && system ? "translateX(0)" : "translateX(100%)",
-            transition: "transform 0.45s cubic-bezier(0.16,1,0.3,1)",
-            overflowY: "auto",
-            zIndex: 10,
-            display: "flex", flexDirection: "column",
-        }}>
-            {system && (
-                <>
-                    {/* top bar */}
-                    <div style={{
-                        height: 3,
-                        background: `linear-gradient(90deg, transparent, ${system.color}, transparent)`,
-                        opacity: 0.7,
-                    }} />
-
-                    <div style={{ padding: "28px 24px", flex: 1 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
-                            <div>
-                                <div style={{ fontFamily: "monospace", fontSize: 9, color: "#7AAFC4", letterSpacing: 4, marginBottom: 6 }}>
-                                    {system.type}
-                                </div>
-                                <div style={{ fontFamily: "'Courier New', monospace", fontSize: 20, color: system.color, letterSpacing: 2 }}>
-                                    {system.name.toUpperCase()}
-                                </div>
-                            </div>
-                            <button onClick={onClose} style={{
-                                background: "none", border: "none", color: "#7AAFC4",
-                                cursor: "pointer", fontSize: 16, alignSelf: "flex-start",
-                            }}>✕</button>
-                        </div>
-
-                        {/* status */}
-                        <div style={{
-                            display: "inline-flex", alignItems: "center", gap: 8,
-                            padding: "5px 14px", marginBottom: 24,
-                            border: `1px solid ${statusColor}40`,
-                            background: `${statusColor}08`,
-                        }}>
-                            <div style={{ width: 6, height: 6, borderRadius: "50%", background: statusColor, boxShadow: `0 0 6px ${statusColor}` }} />
-                            <span style={{ fontFamily: "monospace", fontSize: 9, color: statusColor, letterSpacing: 3 }}>
-                                {system.status}
-                            </span>
-                        </div>
-
-                        {/* description */}
-                        <p style={{
-                            fontFamily: "monospace", fontSize: 12, color: "#E8F4F8cc",
-                            lineHeight: 1.9, margin: "0 0 20px",
-                        }}>
-                            {system.description}
-                        </p>
-
-                        {/* lore detail */}
-                        <div style={{
-                            padding: "14px 16px", marginBottom: 24,
-                            borderLeft: `2px solid ${system.color}50`,
-                            background: `${system.color}05`,
-                        }}>
-                            <p style={{
-                                fontFamily: "'Georgia', serif", fontSize: 12, color: "#E8F4F8aa",
-                                lineHeight: 1.85, margin: 0, fontStyle: "italic",
-                            }}>
-                                {system.detail}
-                            </p>
-                        </div>
-
-                        {/* stats grid */}
-                        <div style={{
-                            display: "grid", gridTemplateColumns: "1fr 1fr",
-                            gap: 12, marginBottom: 24,
-                        }}>
-                            {[
-                                { label: "ERA", value: system.era },
-                                { label: "SEEDED WORLDS", value: system.seededWorlds || "—" },
-                                { label: "STRAIN ORDER", value: system.strainArrival < 0 ? "UNKNOWN" : `#${system.strainArrival + 1}` },
-                                { label: "SYSTEM TYPE", value: system.isBinary ? "BINARY" : "SINGLE" },
-                            ].map(({ label, value }) => (
-                                <div key={label} style={{
-                                    padding: "10px 12px",
-                                    border: "1px solid rgba(0,255,209,0.08)",
-                                    background: "rgba(0,255,209,0.02)",
-                                }}>
-                                    <div style={{ fontFamily: "monospace", fontSize: 8, color: "#7AAFC4", letterSpacing: 3, marginBottom: 4 }}>
-                                        {label}
-                                    </div>
-                                    <div style={{ fontFamily: "'Courier New', monospace", fontSize: 13, color: "#E8F4F8", letterSpacing: 1 }}>
-                                        {value}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {system.seededWorlds > 0 && (
-                            <div style={{
-                                padding: "12px 14px",
-                                border: "1px solid rgba(0,255,209,0.12)",
-                                background: "rgba(0,255,209,0.03)",
-                                fontFamily: "monospace", fontSize: 11, color: "#7AAFC4",
-                                letterSpacing: 1, lineHeight: 1.7,
-                            }}>
-                                ⌗ {system.seededWorlds} worlds seeded from this system. Their biospheres persist — Xenovan DNA encoded in every living thing. The civilization is gone. The life remains.
-                            </div>
-                        )}
-                    </div>
-                </>
-            )}
-        </div>
-    );
-}
-
-// ══════════════════════════════════════════════════════════════════
-//  MAIN PAGE
-// ══════════════════════════════════════════════════════════════════
-
-export default function KetharaMap() {
-    const [selectedSystem, setSelectedSystem] = useState(null);
-    const [hoveredSystem, setHoveredSystem] = useState(null);
-    const [strainProgress, setStrainProgress] = useState(0);
-    const [strainActive, setStrainActive] = useState(false);
-    const [strainComplete, setStrainComplete] = useState(false);
-    const animRef = useRef(null);
-    const startRef = useRef(null);
-
-    const triggerStrain = () => {
-        if (strainActive) return;
-        setStrainActive(true);
-        setStrainComplete(false);
-        setStrainProgress(0);
-        startRef.current = null;
-
-        const animate = (ts) => {
-            if (!startRef.current) startRef.current = ts;
-            const elapsed = ts - startRef.current;
-            const duration = 6000;
-            const progress = Math.min(elapsed / duration, 1);
-            setStrainProgress(progress);
-            if (progress < 1) {
-                animRef.current = requestAnimationFrame(animate);
-            } else {
-                setStrainComplete(true);
+    /* ── Custom cursor ── */
+    useEffect(() => {
+        const move = (e) => {
+            setCursorPos({ x: e.clientX, y: e.clientY });
+            if (cursorRef.current) {
+                gsap.to(cursorRef.current, {
+                    x: e.clientX,
+                    y: e.clientY,
+                    duration: 0.1,
+                    ease: "none",
+                });
+                gsap.to(cursorRingRef.current, {
+                    x: e.clientX,
+                    y: e.clientY,
+                    duration: 0.35,
+                    ease: "power2.out",
+                });
             }
         };
-        animRef.current = requestAnimationFrame(animate);
-    };
+        window.addEventListener("mousemove", move);
+        return () => window.removeEventListener("mousemove", move);
+    }, []);
 
-    const resetStrain = () => {
-        cancelAnimationFrame(animRef.current);
-        setStrainActive(false);
-        setStrainComplete(false);
-        setStrainProgress(0);
-        startRef.current = null;
-    };
+    /* ── Era auto-scroll ── */
+    useEffect(() => {
+        const eras = ["Discovery", "Peak", "Correction"];
+        let i = 0;
+        const iv = setInterval(() => {
+            i = (i + 1) % eras.length;
+            setActiveEra(eras[i]);
+        }, 5000);
+        return () => clearInterval(iv);
+    }, []);
 
-    useEffect(() => () => cancelAnimationFrame(animRef.current), []);
-
-    const fallen = STAR_SYSTEMS.filter(s =>
-        s.strainArrival >= 0 && (s.strainArrival / 8) <= strainProgress
+    const handlePlanetClick = useCallback(
+        (planet) => {
+            setSelectedPlanet(planet.id === selectedPlanet?.id ? null : planet);
+            setVisitedIds((prev) => new Set([...prev, planet.id]));
+        },
+        [selectedPlanet]
     );
 
+    const getPlanetById = (id) => planetsData.find((p) => p.id === id);
+
+    const isConnectedToHovered = (planetId) => {
+        if (!hoveredPlanet) return false;
+        return connections.some(
+            ([a, b]) =>
+                (a === hoveredPlanet && b === planetId) ||
+                (b === hoveredPlanet && a === planetId)
+        );
+    };
+
+    /* ─────────────────────── RENDER ───────────────────────────────── */
     return (
-        <div style={{
-            minHeight: "100vh",
-            background: "#050810",
-            color: "#E8F4F8",
-            fontFamily: "'Courier New', monospace",
-            display: "flex", flexDirection: "column",
-        }}>
-            {/* ── Top bar ── */}
-            <div style={{
-                padding: "16px 28px",
-                borderBottom: "1px solid rgba(0,255,209,0.1)",
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                background: "rgba(5,8,16,0.9)",
-                backdropFilter: "blur(8px)",
-                position: "sticky", top: 0, zIndex: 20,
-                flexWrap: "wrap", gap: 12,
-            }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-                    <a href="/archive" style={{
-                        fontFamily: "monospace", fontSize: 10, color: "#7AAFC4",
-                        textDecoration: "none", letterSpacing: 3,
-                        padding: "4px 12px", border: "1px solid #7AAFC430",
-                    }}>← ARCHIVE</a>
-                    <div>
-                        <div style={{ fontSize: 10, color: "#7AAFC4", letterSpacing: 4 }}>XENOVA TERRITORIAL SURVEY</div>
-                        <div style={{ fontSize: 18, color: "#00FFD1", letterSpacing: 4, lineHeight: 1.2 }}>
-                            KETHARA STAR MAP
+        <>
+            {/* ── Scoped CSS ── */}
+            <style>{`
+        /* === XENOVA SCOPED STYLES === */
+        .xenova-root * { box-sizing: border-box; }
+        .xenova-root {
+          font-family: 'Courier New', Courier, monospace;
+          background: #030810;
+          color: #a0e8d8;
+          min-height: 100vh;
+          overflow: hidden;
+          position: relative;
+          cursor: none;
+        }
+
+        /* grain overlay */
+        .xenova-root::before {
+          content: '';
+          position: fixed;
+          inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+          pointer-events: none;
+          z-index: 9998;
+          opacity: 0.4;
+        }
+
+        /* stars */
+        .xenova-root::after {
+          content: '';
+          position: fixed;
+          inset: 0;
+          background-image:
+            radial-gradient(1px 1px at 10% 20%, rgba(160,232,216,0.6) 0%, transparent 100%),
+            radial-gradient(1px 1px at 30% 60%, rgba(160,232,216,0.4) 0%, transparent 100%),
+            radial-gradient(1px 1px at 55% 15%, rgba(255,255,255,0.5) 0%, transparent 100%),
+            radial-gradient(1px 1px at 75% 80%, rgba(160,232,216,0.3) 0%, transparent 100%),
+            radial-gradient(1px 1px at 90% 40%, rgba(255,255,255,0.4) 0%, transparent 100%),
+            radial-gradient(1px 1px at 20% 88%, rgba(160,232,216,0.5) 0%, transparent 100%),
+            radial-gradient(1px 1px at 60% 45%, rgba(255,255,255,0.3) 0%, transparent 100%),
+            radial-gradient(1px 1px at 45% 70%, rgba(160,232,216,0.4) 0%, transparent 100%);
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        /* custom cursor */
+        .xenova-cursor {
+          position: fixed;
+          width: 8px;
+          height: 8px;
+          background: #00ffdd;
+          border-radius: 50%;
+          pointer-events: none;
+          z-index: 9999;
+          transform: translate(-50%, -50%);
+          mix-blend-mode: difference;
+          transition: width 0.2s, height 0.2s, background 0.2s;
+        }
+        .xenova-cursor.hovering {
+          width: 32px;
+          height: 32px;
+          background: rgba(0,255,221,0.3);
+          box-shadow: 0 0 20px 8px rgba(0,255,221,0.4);
+        }
+        .xenova-cursor-ring {
+          position: fixed;
+          width: 36px;
+          height: 36px;
+          border: 1px solid rgba(0,255,221,0.5);
+          border-radius: 50%;
+          pointer-events: none;
+          z-index: 9997;
+          transform: translate(-50%, -50%);
+          mix-blend-mode: difference;
+          transition: width 0.3s, height 0.3s, opacity 0.3s;
+        }
+        .xenova-cursor-ring.hovering {
+          width: 64px;
+          height: 64px;
+          opacity: 0.6;
+        }
+
+        /* flow animation on SVG paths */
+        @keyframes xenova-flow {
+          from { stroke-dashoffset: 0; }
+          to   { stroke-dashoffset: -40; }
+        }
+        .connect-line {
+          animation: xenova-flow 2.5s linear infinite;
+        }
+        .connect-line.highlighted {
+          stroke: #00ffdd !important;
+          stroke-width: 2 !important;
+          filter: drop-shadow(0 0 6px #00ffdd);
+          animation: xenova-flow 1.2s linear infinite;
+        }
+
+        /* planet node */
+        .planet-node {
+          cursor: none;
+          transition: filter 0.2s;
+        }
+        .planet-node:hover .planet-img {
+          filter: brightness(1.6) saturate(1.4) !important;
+        }
+        .planet-node.selected .planet-ring {
+          stroke: #00ffdd;
+          stroke-width: 2;
+          filter: drop-shadow(0 0 12px #00ffdd);
+        }
+
+        /* holographic panel */
+        .holo-panel {
+          background: linear-gradient(135deg, rgba(0,18,30,0.97) 0%, rgba(0,30,45,0.95) 100%);
+          border: 1px solid rgba(0,255,221,0.3);
+          box-shadow: 0 0 40px rgba(0,255,221,0.15), inset 0 0 40px rgba(0,255,221,0.03);
+        }
+
+        /* scanline effect on panel */
+        .holo-panel::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(0,255,221,0.015) 2px,
+            rgba(0,255,221,0.015) 4px
+          );
+          pointer-events: none;
+          border-radius: inherit;
+        }
+
+        /* sidebar */
+        .xenova-sidebar {
+          background: rgba(0,8,16,0.92);
+          border-right: 1px solid rgba(0,255,221,0.12);
+          backdrop-filter: blur(12px);
+        }
+
+        /* sidebar item */
+        .sidebar-item {
+          cursor: none;
+          padding: 6px 12px;
+          border-radius: 3px;
+          font-size: 11px;
+          letter-spacing: 0.06em;
+          transition: background 0.15s, color 0.15s;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .sidebar-item:hover,
+        .sidebar-item.active {
+          background: rgba(0,255,221,0.08);
+          color: #00ffdd;
+        }
+
+        /* passport badge */
+        .passport-badge {
+          background: rgba(0,255,221,0.06);
+          border: 1px solid rgba(0,255,221,0.2);
+          border-radius: 4px;
+          padding: 4px 8px;
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          color: #00ffdd;
+        }
+
+        /* timeline bar */
+        .timeline-bar {
+          height: 2px;
+          background: linear-gradient(90deg, rgba(0,255,221,0.1), rgba(0,255,221,0.7), rgba(0,255,221,0.1));
+          position: relative;
+        }
+        .timeline-marker {
+          position: absolute;
+          top: -3px;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: #00ffdd;
+          transform: translateX(-50%);
+          box-shadow: 0 0 10px #00ffdd;
+        }
+        .timeline-era {
+          font-size: 10px;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          opacity: 0.5;
+          transition: color 0.3s, opacity 0.3s;
+        }
+        .timeline-era.active {
+          color: #00ffdd;
+          opacity: 1;
+        }
+
+        /* glow pulse on center node */
+        @keyframes core-pulse {
+          0%, 100% { r: 22; opacity: 0.4; }
+          50% { r: 30; opacity: 0.15; }
+        }
+        .core-pulse { animation: core-pulse 2.5s ease-in-out infinite; }
+
+        /* text glitch on planet name */
+        @keyframes glitch {
+          0%, 94%, 100% { transform: none; opacity: 1; }
+          95% { transform: translate(-2px, 1px); opacity: 0.8; }
+          97% { transform: translate(2px, -1px); opacity: 0.9; }
+        }
+        .glitch-text { animation: glitch 6s infinite; }
+
+        /* scroll ref container */
+        .xenova-scroll { width: 100%; height: 100%; }
+
+        /* scrollbar hide */
+        .xenova-root ::-webkit-scrollbar { display: none; }
+        .xenova-root { scrollbar-width: none; }
+
+        /* status pill */
+        .status-pill {
+          font-size: 9px;
+          letter-spacing: 0.15em;
+          padding: 2px 8px;
+          border-radius: 2px;
+          display: inline-block;
+        }
+        .status-PERFECTED { background: rgba(255,40,60,0.2); color: #ff4466; border: 1px solid rgba(255,40,60,0.4); }
+        .status-ACTIVE    { background: rgba(0,255,221,0.15); color: #00ffdd; border: 1px solid rgba(0,255,221,0.4); }
+        .status-SCANNING  { background: rgba(255,160,0,0.15); color: #ffaa00; border: 1px solid rgba(255,160,0,0.4); }
+
+        /* visited dot */
+        .visited-dot {
+          width: 5px; height: 5px;
+          border-radius: 50%;
+          background: #00ffdd;
+          box-shadow: 0 0 6px #00ffdd;
+          flex-shrink: 0;
+        }
+        .unvisited-dot {
+          width: 5px; height: 5px;
+          border-radius: 50%;
+          background: rgba(160,232,216,0.2);
+          flex-shrink: 0;
+        }
+
+        /* ambient audio button */
+        .audio-btn {
+          background: rgba(0,255,221,0.06);
+          border: 1px solid rgba(0,255,221,0.2);
+          border-radius: 3px;
+          color: #00ffdd;
+          padding: 4px 10px;
+          font-size: 10px;
+          font-family: inherit;
+          letter-spacing: 0.1em;
+          cursor: none;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          transition: background 0.2s;
+        }
+        .audio-btn:hover { background: rgba(0,255,221,0.12); }
+
+        /* close button */
+        .close-btn {
+          background: none;
+          border: 1px solid rgba(0,255,221,0.2);
+          color: #a0e8d8;
+          width: 24px; height: 24px;
+          border-radius: 2px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 12px;
+          cursor: none;
+          transition: all 0.15s;
+          flex-shrink: 0;
+        }
+        .close-btn:hover { border-color: #00ffdd; color: #00ffdd; }
+
+        /* data row */
+        .data-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          padding: 6px 0;
+          border-bottom: 1px solid rgba(0,255,221,0.06);
+          font-size: 11px;
+        }
+        .data-row:last-child { border-bottom: none; }
+        .data-label { color: rgba(160,232,216,0.5); letter-spacing: 0.06em; min-width: 90px; }
+        .data-value { color: #a0e8d8; text-align: right; max-width: 200px; line-height: 1.4; }
+      `}</style>
+
+            {/* ── Custom cursor ── */}
+            <div
+                ref={cursorRef}
+                className={`xenova-cursor${cursorHover ? " hovering" : ""}`}
+                style={{ left: 0, top: 0 }}
+            />
+            <div
+                ref={cursorRingRef}
+                className={`xenova-cursor-ring${cursorHover ? " hovering" : ""}`}
+                style={{ left: 0, top: 0 }}
+            />
+
+            {/* ── Root ── */}
+            <div className="xenova-root" style={{ display: "flex", height: "100vh", overflow: "hidden", position: "relative", zIndex: 1 }}>
+
+                {/* ══ LEFT SIDEBAR ════════════════════════════════════════════ */}
+                <aside className="xenova-sidebar" style={{ width: 190, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", zIndex: 10, flexShrink: 0 }}>
+                    {/* Header */}
+                    <div style={{ padding: "16px 12px 12px", borderBottom: "1px solid rgba(0,255,221,0.1)" }}>
+                        <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "rgba(0,255,221,0.5)", marginBottom: 4 }}>XENOVA CHRONICLE</div>
+                        <div style={{ fontSize: 13, fontWeight: "bold", color: "#00ffdd", letterSpacing: "0.08em" }} className="glitch-text">PLANET SELECTOR</div>
+                    </div>
+
+                    {/* Planet list */}
+                    <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
+                        {planetsData.map((p) => (
+                            <div
+                                key={p.id}
+                                className={`sidebar-item${selectedPlanet?.id === p.id ? " active" : ""}`}
+                                onClick={() => handlePlanetClick(p)}
+                                onMouseEnter={() => { setCursorHover(true); setHoveredPlanet(p.id); }}
+                                onMouseLeave={() => { setCursorHover(false); setHoveredPlanet(null); }}
+                            >
+                                {visitedIds.has(p.id) ? <div className="visited-dot" /> : <div className="unvisited-dot" />}
+                                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Visitor Passport */}
+                    <div style={{ padding: "12px", borderTop: "1px solid rgba(0,255,221,0.1)" }}>
+                        <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "rgba(0,255,221,0.5)", marginBottom: 8 }}>VISITOR PASSPORT</div>
+                        <div style={{ marginBottom: 8 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                                <span style={{ fontSize: 10, color: "rgba(160,232,216,0.6)" }}>Exploration Progress</span>
+                                <span style={{ fontSize: 10, color: "#00ffdd" }}>{visitedIds.size}/14</span>
+                            </div>
+                            <div style={{ height: 3, background: "rgba(0,255,221,0.1)", borderRadius: 2, overflow: "hidden" }}>
+                                <motion.div
+                                    style={{ height: "100%", background: "linear-gradient(90deg, #00aaaa, #00ffdd)", borderRadius: 2 }}
+                                    animate={{ width: `${(visitedIds.size / 14) * 100}%` }}
+                                    transition={{ duration: 0.5 }}
+                                />
+                            </div>
+                        </div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
+                            <span className="passport-badge">PLANETS DECODED</span>
+                        </div>
+                        <button
+                            className="audio-btn"
+                            onClick={() => setAudioOn(!audioOn)}
+                            onMouseEnter={() => setCursorHover(true)}
+                            onMouseLeave={() => setCursorHover(false)}
+                            style={{ width: "100%", justifyContent: "center" }}
+                        >
+                            <span style={{ fontSize: 12 }}>{audioOn ? "◉" : "○"}</span>
+                            AMBIENT AUDIO
+                        </button>
+                    </div>
+                </aside>
+
+                {/* ══ MAIN MAP ════════════════════════════════════════════════ */}
+                <main style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+                    {/* Title */}
+                    <div style={{ position: "absolute", top: 20, left: 24, zIndex: 10, pointerEvents: "none" }}>
+                        <div style={{ fontSize: 9, letterSpacing: "0.25em", color: "rgba(0,255,221,0.5)", marginBottom: 4 }}>HOLOGRAPHIC GALACTIC ARCHIVE — CLASSIFICATION: OMEGA</div>
+                        <h1 style={{ fontSize: 22, fontWeight: "bold", color: "#ffffff", letterSpacing: "0.04em", margin: 0, lineHeight: 1.1 }}>
+                            THE XENOVA SOVEREIGNTY
+                        </h1>
+                        <div style={{ fontSize: 14, color: "#00ffdd", letterSpacing: "0.12em", marginTop: 2 }}>14 WORLDS, ONE GOD</div>
+                    </div>
+
+                    {/* RIGHT: Visitor card */}
+                    <div style={{ position: "absolute", top: 16, right: 16, zIndex: 10, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                        <div style={{ background: "rgba(0,8,16,0.85)", border: "1px solid rgba(0,255,221,0.15)", borderRadius: 4, padding: "10px 14px", backdropFilter: "blur(8px)" }}>
+                            <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "rgba(0,255,221,0.5)", marginBottom: 6 }}>VISITOR PASSPORT</div>
+                            <div style={{ fontSize: 10, color: "rgba(160,232,216,0.7)", marginBottom: 4 }}>Exploration Progress</div>
+                            <div style={{ fontSize: 16, color: "#00ffdd", fontWeight: "bold", letterSpacing: "0.1em" }}>
+                                {visitedIds.size}/14 PLANETS DECODED
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{ fontSize: 9, color: "#7AAFC4", letterSpacing: 3, textAlign: "right" }}>
-                        <div>{STAR_SYSTEMS.length} SYSTEMS CHARTED</div>
-                        <div>200 SEEDED WORLDS</div>
-                    </div>
-                    <div style={{ width: 1, height: 32, background: "#7AAFC430" }} />
-                    <button
-                        onClick={strainActive ? resetStrain : triggerStrain}
-                        style={{
-                            padding: "8px 18px",
-                            background: "transparent",
-                            border: `1px solid ${strainActive ? "#FF3A3A" : "#FF3A3A60"}`,
-                            color: strainActive ? "#FF3A3A" : "#FF3A3A80",
-                            fontFamily: "monospace", fontSize: 10, letterSpacing: 3,
-                            cursor: "pointer", transition: "all 0.3s",
-                        }}
+                    {/* ── SVG MAP ── */}
+                    <svg
+                        ref={svgRef}
+                        viewBox="0 0 620 560"
+                        style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}
+                        xmlns="http://www.w3.org/2000/svg"
                     >
-                        {strainComplete ? "✕ RESET" : strainActive ? "SPREADING…" : "▶ STRAIN OMEGA"}
-                    </button>
-                </div>
-            </div>
+                        <defs>
+                            {/* Radial glow filter */}
+                            <filter id="glow-soft" x="-50%" y="-50%" width="200%" height="200%">
+                                <feGaussianBlur stdDeviation="4" result="blur" />
+                                <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                            </filter>
+                            <filter id="glow-strong" x="-100%" y="-100%" width="300%" height="300%">
+                                <feGaussianBlur stdDeviation="8" result="blur" />
+                                <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                            </filter>
+                            <filter id="planet-glow" x="-50%" y="-50%" width="200%" height="200%">
+                                <feGaussianBlur stdDeviation="3" result="blur" />
+                                <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                            </filter>
 
-            {/* ── Strain progress bar ── */}
-            {strainActive && (
-                <div style={{ height: 2, background: "rgba(255,58,58,0.15)", position: "relative" }}>
-                    <div style={{
-                        position: "absolute", left: 0, top: 0, bottom: 0,
-                        width: `${strainProgress * 100}%`,
-                        background: "linear-gradient(90deg, #FF3A3A, #FF6B6B)",
-                        boxShadow: "0 0 12px #FF3A3A",
-                        transition: "width 0.05s linear",
-                    }} />
-                </div>
-            )}
+                            {/* Central core gradient */}
+                            <radialGradient id="core-grad" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stopColor="#00ffdd" stopOpacity="0.9" />
+                                <stop offset="40%" stopColor="#00aaaa" stopOpacity="0.6" />
+                                <stop offset="100%" stopColor="#003344" stopOpacity="0.0" />
+                            </radialGradient>
 
-            {/* ── Main content ── */}
-            <div style={{ flex: 1, display: "flex", position: "relative", overflow: "hidden" }}>
+                            {/* Planet clip */}
+                            {planetsData.map((p) => (
+                                <clipPath key={p.id} id={`clip-${p.id}`}>
+                                    <circle cx={p.cx} cy={p.cy} r={p.isCenter ? 24 : 18} />
+                                </clipPath>
+                            ))}
+                        </defs>
 
-                {/* ── Left legend ── */}
-                <div style={{
-                    width: 200, flexShrink: 0,
-                    borderRight: "1px solid rgba(0,255,209,0.08)",
-                    padding: "24px 16px",
-                    background: "rgba(5,8,16,0.6)",
-                    overflowY: "auto",
-                    display: "flex", flexDirection: "column", gap: 24,
-                }}>
-                    {/* Era legend */}
-                    <div>
-                        <div style={{ fontSize: 8, color: "#7AAFC4", letterSpacing: 4, marginBottom: 12 }}>ERAS</div>
-                        {[
-                            { label: "Rise", color: "#00FFD1", desc: "Expansion" },
-                            { label: "Peak", color: "#FFB347", desc: "Dominion" },
-                            { label: "Unraveling", color: "#FF3A3A", desc: "Collapse" },
-                        ].map(({ label, color, desc }) => (
-                            <div key={label} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                                <div style={{ width: 8, height: 8, borderRadius: "50%", background: color, boxShadow: `0 0 6px ${color}` }} />
-                                <div>
-                                    <div style={{ fontSize: 10, color, letterSpacing: 2 }}>{label}</div>
-                                    <div style={{ fontSize: 8, color: "#7AAFC4", letterSpacing: 1 }}>{desc}</div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                        {/* Outer ambient glow ring */}
+                        <circle cx="313" cy="303" r="200" fill="none" stroke="rgba(0,255,221,0.03)" strokeWidth="80" />
+                        <circle cx="313" cy="303" r="140" fill="none" stroke="rgba(0,255,221,0.04)" strokeWidth="60" />
 
-                    {/* Status legend */}
-                    <div>
-                        <div style={{ fontSize: 8, color: "#7AAFC4", letterSpacing: 4, marginBottom: 12 }}>STATUS</div>
-                        {Object.entries(STATUS_COLOR).filter(([k], i, a) => a.findIndex(x => x[1] === STATUS_COLOR[k]) === i).map(([status, color]) => (
-                            <div key={status} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                                <div style={{ width: 6, height: 6, borderRadius: "50%", background: color }} />
-                                <span style={{ fontSize: 9, color: "#7AAFC4", letterSpacing: 2 }}>{status}</span>
-                            </div>
-                        ))}
-                    </div>
+                        {/* ── CONNECTION LINES ── */}
+                        {connections.map(([a, b], i) => {
+                            const pa = getPlanetById(a);
+                            const pb = getPlanetById(b);
+                            if (!pa || !pb) return null;
+                            const isHighlighted =
+                                (hoveredPlanet === a || hoveredPlanet === b) &&
+                                (isConnectedToHovered(a) || isConnectedToHovered(b));
+                            return (
+                                <line
+                                    key={i}
+                                    className={`connect-line${isHighlighted ? " highlighted" : ""}`}
+                                    x1={pa.cx}
+                                    y1={pa.cy}
+                                    x2={pb.cx}
+                                    y2={pb.cy}
+                                    stroke={isHighlighted ? "#00ffdd" : "rgba(0,200,180,0.25)"}
+                                    strokeWidth={isHighlighted ? 1.8 : 0.8}
+                                    strokeDasharray={isHighlighted ? "6 3" : "4 4"}
+                                />
+                            );
+                        })}
 
-                    {/* System list */}
-                    <div>
-                        <div style={{ fontSize: 8, color: "#7AAFC4", letterSpacing: 4, marginBottom: 12 }}>SYSTEMS</div>
-                        {STAR_SYSTEMS.map(sys => (
-                            <div
-                                key={sys.id}
-                                onClick={() => setSelectedSystem(sys)}
+                        {/* ── PLANET NODES ── */}
+                        {planetsData.map((planet) => {
+                            const isSelected = selectedPlanet?.id === planet.id;
+                            const isHovered = hoveredPlanet === planet.id;
+                            const r = planet.isCenter ? 24 : 18;
+
+                            return (
+                                <g
+                                    key={planet.id}
+                                    className={`planet-node${isSelected ? " selected" : ""}`}
+                                    onClick={() => handlePlanetClick(planet)}
+                                    onMouseEnter={() => { setCursorHover(true); setHoveredPlanet(planet.id); }}
+                                    onMouseLeave={() => { setCursorHover(false); setHoveredPlanet(null); }}
+                                    style={{ cursor: "none" }}
+                                    filter={isHovered || isSelected ? "url(#glow-soft)" : undefined}
+                                >
+                                    {/* Outer pulse ring for center */}
+                                    {planet.isCenter && (
+                                        <>
+                                            <circle className="core-pulse" cx={planet.cx} cy={planet.cy} r="30" fill="rgba(0,255,221,0.08)" stroke="rgba(0,255,221,0.15)" strokeWidth="0.5" />
+                                            <circle cx={planet.cx} cy={planet.cy} r="200" fill="url(#core-grad)" opacity="0.05" />
+                                        </>
+                                    )}
+
+                                    {/* Selection glow ring */}
+                                    {isSelected && (
+                                        <circle cx={planet.cx} cy={planet.cy} r={r + 8} fill="none" stroke="#00ffdd" strokeWidth="1" opacity="0.5" strokeDasharray="4 3" />
+                                    )}
+
+                                    {/* Orbit ring */}
+                                    <circle
+                                        cx={planet.cx}
+                                        cy={planet.cy}
+                                        r={r + 3}
+                                        fill="none"
+                                        stroke={isSelected || isHovered ? "rgba(0,255,221,0.5)" : "rgba(0,200,180,0.15)"}
+                                        strokeWidth={isSelected ? "1.5" : "0.5"}
+                                        className="planet-ring"
+                                    />
+
+                                    {/* Planet body using colored circle with CSS filter sim */}
+                                    <circle
+                                        cx={planet.cx}
+                                        cy={planet.cy}
+                                        r={r}
+                                        fill={planet.isCenter ? "url(#core-grad)" : `hsl(${planet.hueRotate}, 70%, ${planet.isCenter ? 50 : 25}%)`}
+                                        stroke={isSelected ? "#00ffdd" : planet.isCenter ? "#00ffdd" : "rgba(0,200,180,0.4)"}
+                                        strokeWidth={isSelected ? "2" : planet.isCenter ? "1.5" : "0.8"}
+                                        opacity={planet.isCenter ? 1 : 0.9}
+                                    />
+
+                                    {/* Planet texture overlay */}
+                                    <circle
+                                        cx={planet.cx - r * 0.25}
+                                        cy={planet.cy - r * 0.25}
+                                        r={r * 0.55}
+                                        fill={`hsla(${(planet.hueRotate + 40) % 360}, 60%, 60%, 0.18)`}
+                                    />
+                                    <circle
+                                        cx={planet.cx + r * 0.2}
+                                        cy={planet.cy + r * 0.15}
+                                        r={r * 0.3}
+                                        fill={`hsla(${(planet.hueRotate + 80) % 360}, 50%, 30%, 0.2)`}
+                                    />
+
+                                    {/* Center core icon */}
+                                    {planet.isCenter && (
+                                        <text x={planet.cx} y={planet.cy + 5} textAnchor="middle" fontSize="14" fill="#00ffdd" style={{ userSelect: "none" }}>⬡</text>
+                                    )}
+
+                                    {/* Status dot */}
+                                    <circle
+                                        cx={planet.cx + r - 4}
+                                        cy={planet.cy - r + 4}
+                                        r="3.5"
+                                        fill={statusColor(planet.status)}
+                                        opacity="0.9"
+                                    />
+
+                                    {/* Planet name label */}
+                                    <text
+                                        x={planet.cx}
+                                        y={planet.cy + r + 13}
+                                        textAnchor="middle"
+                                        fontSize="9"
+                                        fill={isSelected || isHovered ? "#00ffdd" : "rgba(160,232,216,0.7)"}
+                                        letterSpacing="0.08em"
+                                        style={{ userSelect: "none", fontFamily: "Courier New, monospace" }}
+                                    >
+                                        {planet.name}
+                                    </text>
+                                </g>
+                            );
+                        })}
+                    </svg>
+
+                    {/* ── HOLOGRAPHIC DATA PANEL ── */}
+                    <AnimatePresence>
+                        {selectedPlanet && (
+                            <motion.div
+                                key={selectedPlanet.id}
+                                initial={{ opacity: 0, x: 40, scale: 0.96 }}
+                                animate={{ opacity: 1, x: 0, scale: 1 }}
+                                exit={{ opacity: 0, x: 40, scale: 0.96 }}
+                                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                                className="holo-panel"
                                 style={{
-                                    padding: "5px 8px", marginBottom: 3,
-                                    cursor: "pointer",
-                                    background: selectedSystem?.id === sys.id ? `${sys.color}10` : "transparent",
-                                    borderLeft: `2px solid ${selectedSystem?.id === sys.id ? sys.color : "transparent"}`,
-                                    transition: "all 0.15s",
+                                    position: "absolute",
+                                    bottom: 80,
+                                    right: 16,
+                                    width: 310,
+                                    borderRadius: 6,
+                                    padding: "16px",
+                                    zIndex: 20,
+                                    overflow: "hidden",
                                 }}
                             >
-                                <div style={{ fontSize: 9, color: selectedSystem?.id === sys.id ? sys.color : "#7AAFC4", letterSpacing: 1 }}>
-                                    {sys.name}
+                                {/* Scan line animation */}
+                                <motion.div
+                                    initial={{ top: 0, opacity: 0.4 }}
+                                    animate={{ top: "100%", opacity: 0 }}
+                                    transition={{ duration: 1.2, ease: "linear" }}
+                                    style={{
+                                        position: "absolute",
+                                        left: 0,
+                                        right: 0,
+                                        height: 2,
+                                        background: "rgba(0,255,221,0.6)",
+                                        pointerEvents: "none",
+                                        zIndex: 5,
+                                    }}
+                                />
+
+                                {/* Header */}
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                                    <div>
+                                        <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "rgba(0,255,221,0.5)", marginBottom: 3 }}>
+                                            PLANET {selectedPlanet.id.toString().padStart(2, "0")} — XENOVA ARCHIVE
+                                        </div>
+                                        <div style={{ fontSize: 15, color: "#ffffff", fontWeight: "bold", letterSpacing: "0.06em" }}>
+                                            {selectedPlanet.name}
+                                        </div>
+                                        <div style={{ fontSize: 10, color: "rgba(160,232,216,0.6)", letterSpacing: "0.06em" }}>
+                                            {selectedPlanet.subtitle}
+                                        </div>
+                                    </div>
+                                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                                        <button
+                                            className="close-btn"
+                                            onClick={() => setSelectedPlanet(null)}
+                                            onMouseEnter={() => setCursorHover(true)}
+                                            onMouseLeave={() => setCursorHover(false)}
+                                        >
+                                            ×
+                                        </button>
+                                        <span className={`status-pill status-${selectedPlanet.status}`}>
+                                            {selectedPlanet.status}
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+
+                                {/* Data rows */}
+                                <div style={{ marginBottom: 12 }}>
+                                    <div className="data-row">
+                                        <span className="data-label">POPULATION</span>
+                                        <span className="data-value" style={{ fontSize: 10 }}>{selectedPlanet.population}</span>
+                                    </div>
+                                    <div className="data-row">
+                                        <span className="data-label">PRIMARY RESOURCE</span>
+                                        <span className="data-value">{selectedPlanet.resource}</span>
+                                    </div>
+                                    <div className="data-row">
+                                        <span className="data-label">ARTIFACT</span>
+                                        <span className="data-value" style={{ color: "#ffaa44" }}>{selectedPlanet.artifact}</span>
+                                    </div>
+                                    <div className="data-row">
+                                        <span className="data-label">ERA</span>
+                                        <span className="data-value">{selectedPlanet.era}</span>
+                                    </div>
+                                </div>
+
+                                {/* Lore */}
+                                <div style={{ background: "rgba(0,255,221,0.03)", border: "1px solid rgba(0,255,221,0.08)", borderRadius: 3, padding: "10px 12px" }}>
+                                    <div style={{ fontSize: 9, letterSpacing: "0.15em", color: "rgba(0,255,221,0.4)", marginBottom: 6 }}>ARCHIVE ENTRY</div>
+                                    <p style={{ fontSize: 10, lineHeight: 1.65, color: "rgba(160,232,216,0.75)", margin: 0 }}>
+                                        {selectedPlanet.lore}
+                                    </p>
+                                </div>
+
+                                {/* Corner decorations */}
+                                <div style={{ position: "absolute", top: 6, left: 6, width: 8, height: 8, borderTop: "1px solid rgba(0,255,221,0.4)", borderLeft: "1px solid rgba(0,255,221,0.4)" }} />
+                                <div style={{ position: "absolute", top: 6, right: 6, width: 8, height: 8, borderTop: "1px solid rgba(0,255,221,0.4)", borderRight: "1px solid rgba(0,255,221,0.4)" }} />
+                                <div style={{ position: "absolute", bottom: 6, left: 6, width: 8, height: 8, borderBottom: "1px solid rgba(0,255,221,0.4)", borderLeft: "1px solid rgba(0,255,221,0.4)" }} />
+                                <div style={{ position: "absolute", bottom: 6, right: 6, width: 8, height: 8, borderBottom: "1px solid rgba(0,255,221,0.4)", borderRight: "1px solid rgba(0,255,221,0.4)" }} />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* ── CLEAN TIMELINE ── */}
+                    <div
+                        ref={timelineRef}
+                        style={{
+                            position: "absolute",
+                            bottom: 20,
+                            left: 24,
+                            width: 340,
+                            zIndex: 10,
+                            background: "rgba(0,8,16,0.85)",
+                            border: "1px solid rgba(0,255,221,0.1)",
+                            borderRadius: 4,
+                            padding: "12px 16px",
+                            backdropFilter: "blur(8px)",
+                        }}
+                    >
+                        <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "rgba(0,255,221,0.5)", marginBottom: 10 }}>CLEAN TIMELINE</div>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                            {["Discovery of the Liquid", "The Ascension (Peak)", "The Correction (Decline)"].map((label, i) => {
+                                const eras = ["Discovery", "Peak", "Correction"];
+                                return (
+                                    <div key={i} style={{ fontSize: 10, color: activeEra === eras[i] ? "#00ffdd" : "rgba(160,232,216,0.4)", transition: "color 0.4s", maxWidth: 80, lineHeight: 1.3 }}>
+                                        {label}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <div style={{ height: 2, background: "rgba(0,255,221,0.08)", borderRadius: 2, position: "relative", marginBottom: 4 }}>
+                            <motion.div
+                                style={{ height: "100%", background: "linear-gradient(90deg, transparent, #00ffdd, transparent)", borderRadius: 2 }}
+                                animate={{ width: activeEra === "Discovery" ? "33%" : activeEra === "Peak" ? "66%" : "100%" }}
+                                transition={{ duration: 0.8, ease: "easeInOut" }}
+                            />
+                            {[0, 50, 100].map((pct) => (
+                                <div key={pct} style={{ position: "absolute", top: -4, left: `${pct}%`, width: 10, height: 10, borderRadius: "50%", background: "#00ffdd", transform: "translateX(-50%)", opacity: 0.6, boxShadow: "0 0 8px #00ffdd" }} />
+                            ))}
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between" }}>
+                            {["Eros", "—", "Decline"].map((l, i) => (
+                                <div key={i} style={{ fontSize: 9, color: "rgba(160,232,216,0.3)", letterSpacing: "0.1em" }}>{l}</div>
+                            ))}
+                        </div>
                     </div>
-                </div>
 
-                {/* ── Map area ── */}
-                <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
-                    <StarMapCanvas
-                        selectedSystem={selectedSystem}
-                        hoveredSystem={hoveredSystem}
-                        onHover={setHoveredSystem}
-                        onSelect={(sys) => setSelectedSystem(prev => prev?.id === sys.id ? null : sys)}
-                        strainProgress={strainProgress}
-                    />
-
-                    {/* tooltip */}
-                    {hoveredSystem && !selectedSystem && (
-                        <div style={{
-                            position: "absolute", bottom: 24, left: "50%",
-                            transform: "translateX(-50%)",
-                            background: "rgba(5,8,16,0.92)",
-                            border: `1px solid ${hoveredSystem.color}40`,
-                            padding: "10px 20px",
-                            fontFamily: "monospace", fontSize: 11,
-                            color: hoveredSystem.color, letterSpacing: 3,
-                            pointerEvents: "none",
-                            backdropFilter: "blur(4px)",
-                        }}>
-                            {hoveredSystem.name.toUpperCase()} — {hoveredSystem.type}
-                        </div>
-                    )}
-
-                    {/* strain counter */}
-                    {strainActive && (
-                        <div style={{
-                            position: "absolute", bottom: 24, right: 24,
-                            background: "rgba(5,8,16,0.9)",
-                            border: "1px solid #FF3A3A40",
-                            padding: "12px 18px",
-                            fontFamily: "monospace", textAlign: "right",
-                        }}>
-                            <div style={{ fontSize: 8, color: "#FF3A3A", letterSpacing: 4, marginBottom: 4 }}>STRAIN OMEGA SPREAD</div>
-                            <div style={{ fontSize: 22, color: "#FF3A3A", letterSpacing: 2 }}>
-                                {fallen.length}<span style={{ fontSize: 11, color: "#FF3A3A80" }}>/{STAR_SYSTEMS.filter(s => s.strainArrival >= 0).length}</span>
-                            </div>
-                            <div style={{ fontSize: 8, color: "#FF3A3A60", letterSpacing: 2 }}>SYSTEMS LOST</div>
-                        </div>
-                    )}
-
-                    {/* "click to explore" hint */}
-                    {!selectedSystem && !hoveredSystem && !strainActive && (
-                        <div style={{
-                            position: "absolute", bottom: 24, left: "50%",
-                            transform: "translateX(-50%)",
-                            fontFamily: "monospace", fontSize: 9, color: "#7AAFC440",
-                            letterSpacing: 4, pointerEvents: "none",
-                        }}>
-                            CLICK ANY SYSTEM TO EXPLORE · ▶ STRAIN OMEGA TO SIMULATE CASCADE
-                        </div>
-                    )}
-                </div>
-
-                {/* ── Detail panel ── */}
-                <SystemPanel system={selectedSystem} onClose={() => setSelectedSystem(null)} />
-            </div>
-
-            {/* ── Bottom stats bar ── */}
-            <div style={{
-                padding: "12px 28px",
-                borderTop: "1px solid rgba(0,255,209,0.08)",
-                background: "rgba(5,8,16,0.9)",
-                display: "flex", gap: 32, flexWrap: "wrap",
-                fontFamily: "monospace", fontSize: 9, color: "#7AAFC4", letterSpacing: 3,
-            }}>
-                {[
-                    { label: "STAR SYSTEMS", value: "14" },
-                    { label: "SEEDED WORLDS", value: "200+" },
-                    { label: "YEARS OF EXPANSION", value: "40,000" },
-                    { label: "STRAIN OMEGA ORIGIN", value: "UNKNOWN" },
-                    { label: "SURVIVORS", value: "NONE CONFIRMED" },
-                ].map(({ label, value }) => (
-                    <div key={label}>
-                        <span style={{ color: "#7AAFC460" }}>{label}: </span>
-                        <span style={{ color: "#00FFD1" }}>{value}</span>
+                    {/* Instruction hint */}
+                    <div style={{
+                        position: "absolute",
+                        bottom: 20,
+                        right: 16,
+                        fontSize: 9,
+                        letterSpacing: "0.1em",
+                        color: "rgba(160,232,216,0.3)",
+                        zIndex: 10,
+                        textAlign: "right",
+                    }}>
+                        CLICK NODE TO DECODE · HOVER TO ILLUMINATE
                     </div>
-                ))}
+                </main>
             </div>
-        </div>
+        </>
     );
 }
