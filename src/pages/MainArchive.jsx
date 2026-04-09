@@ -1,4 +1,3 @@
-import NavBar from '../components/NavBar'
 import StarField from '../components/StarField'
 import Planet from '../components/Planet'
 import { useNavigate } from 'react-router-dom'
@@ -7,6 +6,7 @@ import { useRef } from 'react'
 const eras = [
   {
     id: 'rise',
+    timelineId: 'awakening',
     label: 'ERA I',
     title: 'THE RISE',
     years: '0 — 15,000 AX',
@@ -16,6 +16,7 @@ const eras = [
   },
   {
     id: 'peak',
+    timelineId: 'peak',
     label: 'ERA II',
     title: 'THE PEAK',
     years: '15,000 — 38,000 AX',
@@ -25,6 +26,7 @@ const eras = [
   },
   {
     id: 'fall',
+    timelineId: 'unraveling',
     label: 'ERA III',
     title: 'THE UNRAVELING',
     years: '38,000 — 40,000 AX',
@@ -37,11 +39,8 @@ const eras = [
 function MainArchive() {
   const navigate = useNavigate()
   const heroRef = useRef(null)
-
   return (
     <div className="archive-page">
-
-      <NavBar />
 
       {/* ── Hero Section ── */}
       <section className="archive-hero" ref={heroRef}>
@@ -108,7 +107,7 @@ function MainArchive() {
               key={era.id}
               className="era-card"
               style={{ '--era-color': era.color }}
-              onClick={() => navigate('/timeline')}
+              onClick={() => navigate('/timeline', { state: { era: era.timelineId } })}
             >
               <div className="era-card-top">
                 <span className="era-icon">{era.icon}</span>

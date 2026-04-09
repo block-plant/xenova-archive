@@ -1,6 +1,9 @@
 import React, {
   useEffect, useRef, useState, useCallback,
 } from 'react';
+import GlobalPassport from '../components/GlobalPassport';
+import StarField from '../components/StarField';
+import { useVisitor } from '../context/VisitorContext';
 import {
   motion, useMotionValue, useTransform, useSpring,
   AnimatePresence, useInView,
@@ -646,7 +649,6 @@ const IMAGE_SHAPE = {
   circle: { aspectRatio: '1/1', borderRadius: '50%' },
   landscape: { aspectRatio: '3/2', borderRadius: '3px' },
   panoramic: { aspectRatio: '21/9', borderRadius: '3px' },
-  portrait: { aspectRatio: '2/3', borderRadius: '3px' },
 };
 
 function ArtifactCard({ artifact, idx, onOpen }) {
@@ -996,8 +998,14 @@ export default function ArtifactsVault() {
   const [selected, setSelected] = useState(null);
   const [godVisible, setGodVisible] = useState(false);
   const [audioOn, setAudioOn] = useState(false);
+  const { addViewedRelic } = useVisitor();
   const scrollContainerRef = useRef(null);
   const locoRef = useRef(null);
+
+  const handleOpenArtifact = useCallback((artifact) => {
+    setSelected(artifact);
+    addViewedRelic(artifact.id);
+  }, [addViewedRelic]);
 
   // Inject global styles
   useEffect(() => {
@@ -1043,26 +1051,14 @@ export default function ArtifactsVault() {
     >
       <XenovaCursor />
       <NebulaBackground />
+      <GlobalPassport />
       <DataTicker />
 
-      {/* ── Top bar ── */}
+      {/* ── Floating Ambient Toggle ── */}
       <div style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 400,
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '1.25rem 2.5rem',
-        background: 'linear-gradient(to bottom, rgba(4,4,8,.85) 0%, transparent 100%)',
-        backdropFilter: 'blur(4px)',
-        borderBottom: '1px solid rgba(0,245,212,.05)',
+        position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 400,
+        display: 'flex', gap: '1.5rem', alignItems: 'center'
       }}>
-        <div style={{
-          fontFamily: 'var(--ff-mono)', fontSize: '.52rem',
-          letterSpacing: '.3em', color: 'var(--liquid)', opacity: .6,
-        }}>
-          THE XENOVA CHRONICLE
-        </div>
-
-        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-          {/* Ambient toggle */}
           <button
             onClick={() => setAudioOn(v => !v)}
             style={{
@@ -1073,17 +1069,11 @@ export default function ArtifactsVault() {
               fontFamily: 'var(--ff-mono)', cursor: 'none', transition: 'all .3s',
               backdropFilter: 'blur(8px)',
             }}
+            onMouseEnter={e => { e.currentTarget.style.background = audioOn ? 'rgba(0,245,212,.1)' : 'rgba(255,255,255,.05)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
           >
-            {audioOn ? '◉ AMBIENT ON' : '○ AMBIENT OFF'}
+            {audioOn ? 'AMBIENT AUDIO: ACTIVE' : 'AMBIENT AUDIO: OFFLINE'}
           </button>
-
-          <div style={{
-            fontFamily: 'var(--ff-mono)', fontSize: '.5rem',
-            letterSpacing: '.2em', color: 'var(--muted)', opacity: .5,
-          }}>
-            8 RELICS RECOVERED
-          </div>
-        </div>
       </div>
 
       {/* ── Scroll container ── */}
@@ -1148,7 +1138,7 @@ export default function ArtifactsVault() {
               <ArtifactCard
                 artifact={art}
                 idx={i}
-                onOpen={setSelected}
+                onOpen={handleOpenArtifact}
               />
             </div>
           ))}

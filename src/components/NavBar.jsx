@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 const navLinks = [
   { label: 'ARCHIVE',    path: '/archive' },
@@ -6,20 +6,42 @@ const navLinks = [
   { label: 'TIMELINE',   path: '/timeline' },
   { label: "VEX'AL",     path: '/codex' },
   { label: 'KETHARA',    path: '/map' },
-  { label: 'TERMINAL',   path: '/terminal' },
 ]
 
 function NavBar() {
   const location = useLocation()
+  const navigate = useNavigate()
+
+  // Hide on gate page
+  if (location.pathname === '/') return null
 
   return (
     <nav className="navbar">
 
-      {/* Logo */}
-      <Link to="/archive" className="nav-logo">
-        <span className="nav-logo-x">X</span>
-        <span className="nav-logo-text">ENOVA</span>
-      </Link>
+      {/* Back and Logo */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+        <button 
+          onClick={() => navigate(-1)}
+          className="nav-link"
+          style={{ 
+            background: 'transparent', 
+            border: 'none', 
+            cursor: 'pointer', 
+            fontFamily: 'inherit',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: 0
+          }}
+        >
+          <span>←</span> BACK
+        </button>
+
+        <Link to="/archive" className="nav-logo">
+          <span className="nav-logo-x">X</span>
+          <span className="nav-logo-text">ENOVA</span>
+        </Link>
+      </div>
 
       {/* Links */}
       <div className="nav-links">

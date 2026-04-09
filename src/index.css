@@ -28,6 +28,13 @@ body {
   color: var(--pale-starlight);
   font-family: 'Courier New', monospace;
   overflow-x: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input, textarea {
+  user-select: auto;
+  -webkit-user-select: auto;
 }
 
 /* ── Glow Utilities ── */

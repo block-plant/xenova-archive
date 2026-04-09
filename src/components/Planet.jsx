@@ -38,7 +38,7 @@ function PlanetMesh() {
 
       {/* ── PLANET ── */}
       <mesh ref={meshRef}>
-        <sphereGeometry args={[2, 128, 128]} />
+        <sphereGeometry args={[2, 64, 64]} />
         <meshStandardMaterial
           map={planetTexture}
           roughness={0.85}
@@ -115,3 +115,6 @@ export default function Planet() {
     </div>
   )
 }
+
+useTexture.preload('/images/planet.jpg')
+useTexture.preload('/images/moon.jpg')

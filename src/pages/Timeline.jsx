@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 // ─── ERA DATA ────────────────────────────────────────────────────────────────
 const ERAS = [
   {
@@ -909,7 +908,6 @@ export default function Timeline() {
       `}</style>
 
       <StarField />
-      <Header navigate={navigate} />
       <EraLegend activeEra={activeEra} onSelect={handleSelectEra} />
 
       {/* Hero banner */}

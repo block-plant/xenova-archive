@@ -12,6 +12,8 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useVisitor } from "../context/VisitorContext";
+import StarField from "../components/StarField";
 import gsap from "gsap";
 
 /* ─── PLANETS DATA ─────────────────────────────────────────────── */
@@ -270,7 +272,7 @@ export default function GalacticMap() {
 
     const [selectedPlanet, setSelectedPlanet] = useState(null);
     const [hoveredPlanet, setHoveredPlanet] = useState(null);
-    const [visitedIds, setVisitedIds] = useState(new Set([1]));
+    const { visitedPlanets: visitedIds, addVisitedPlanet } = useVisitor();
     const [audioOn, setAudioOn] = useState(false);
     const [cursorPos, setCursorPos] = useState({ x: -100, y: -100 });
     const [cursorHover, setCursorHover] = useState(false);
@@ -358,9 +360,9 @@ export default function GalacticMap() {
     const handlePlanetClick = useCallback(
         (planet) => {
             setSelectedPlanet(planet.id === selectedPlanet?.id ? null : planet);
-            setVisitedIds((prev) => new Set([...prev, planet.id]));
+            addVisitedPlanet(planet.id);
         },
-        [selectedPlanet]
+        [selectedPlanet, addVisitedPlanet]
     );
 
     const getPlanetById = (id) => planetsData.find((p) => p.id === id);
@@ -708,25 +710,8 @@ export default function GalacticMap() {
                         ))}
                     </div>
 
-                    {/* Visitor Passport */}
+                    {/* Audio Toggle */}
                     <div style={{ padding: "12px", borderTop: "1px solid rgba(0,255,221,0.1)" }}>
-                        <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "rgba(0,255,221,0.5)", marginBottom: 8 }}>VISITOR PASSPORT</div>
-                        <div style={{ marginBottom: 8 }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                                <span style={{ fontSize: 10, color: "rgba(160,232,216,0.6)" }}>Exploration Progress</span>
-                                <span style={{ fontSize: 10, color: "#00ffdd" }}>{visitedIds.size}/14</span>
-                            </div>
-                            <div style={{ height: 3, background: "rgba(0,255,221,0.1)", borderRadius: 2, overflow: "hidden" }}>
-                                <motion.div
-                                    style={{ height: "100%", background: "linear-gradient(90deg, #00aaaa, #00ffdd)", borderRadius: 2 }}
-                                    animate={{ width: `${(visitedIds.size / 14) * 100}%` }}
-                                    transition={{ duration: 0.5 }}
-                                />
-                            </div>
-                        </div>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
-                            <span className="passport-badge">PLANETS DECODED</span>
-                        </div>
                         <button
                             className="audio-btn"
                             onClick={() => setAudioOn(!audioOn)}
@@ -742,8 +727,9 @@ export default function GalacticMap() {
 
                 {/* ══ MAIN MAP ════════════════════════════════════════════════ */}
                 <main style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+                    {/* NavBar is now in App.jsx */}
                     {/* Title */}
-                    <div style={{ position: "absolute", top: 20, left: 24, zIndex: 10, pointerEvents: "none" }}>
+                    <div style={{ position: "absolute", top: 80, left: 24, zIndex: 10, pointerEvents: "none" }}>
                         <div style={{ fontSize: 9, letterSpacing: "0.25em", color: "rgba(0,255,221,0.5)", marginBottom: 4 }}>HOLOGRAPHIC GALACTIC ARCHIVE — CLASSIFICATION: OMEGA</div>
                         <h1 style={{ fontSize: 22, fontWeight: "bold", color: "#ffffff", letterSpacing: "0.04em", margin: 0, lineHeight: 1.1 }}>
                             THE XENOVA SOVEREIGNTY
@@ -751,16 +737,7 @@ export default function GalacticMap() {
                         <div style={{ fontSize: 14, color: "#00ffdd", letterSpacing: "0.12em", marginTop: 2 }}>14 WORLDS, ONE GOD</div>
                     </div>
 
-                    {/* RIGHT: Visitor card */}
-                    <div style={{ position: "absolute", top: 16, right: 16, zIndex: 10, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-                        <div style={{ background: "rgba(0,8,16,0.85)", border: "1px solid rgba(0,255,221,0.15)", borderRadius: 4, padding: "10px 14px", backdropFilter: "blur(8px)" }}>
-                            <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "rgba(0,255,221,0.5)", marginBottom: 6 }}>VISITOR PASSPORT</div>
-                            <div style={{ fontSize: 10, color: "rgba(160,232,216,0.7)", marginBottom: 4 }}>Exploration Progress</div>
-                            <div style={{ fontSize: 16, color: "#00ffdd", fontWeight: "bold", letterSpacing: "0.1em" }}>
-                                {visitedIds.size}/14 PLANETS DECODED
-                            </div>
-                        </div>
-                    </div>
+                    {/* Global Passport acts as Visitor tracking, removed local visitor card here */}
 
                     {/* ── SVG MAP ── */}
                     <svg
