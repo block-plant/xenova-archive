@@ -10,6 +10,7 @@ import KetharaApp from './pages/KetharaApp'
 import Terminal from './pages/Terminal'
 import GlobalPassport from './components/GlobalPassport'
 import NavBar from './components/NavBar'
+import ScrollToTop from './components/ScrollToTop'
 
 function App() {
   useEffect(() => {
@@ -50,6 +51,7 @@ function App() {
   return (
     <VisitorProvider>
       <Router>
+        <ScrollToTop />
         <NavBar />
         <GlobalPassport />
         <Routes>

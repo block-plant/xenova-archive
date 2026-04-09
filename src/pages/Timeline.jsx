@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 // ─── ERA DATA ────────────────────────────────────────────────────────────────
 const ERAS = [
   {
@@ -837,9 +837,20 @@ function EraLegend({ activeEra, onSelect }) {
 // ─── MAIN PAGE ───────────────────────────────────────────────────────────────
 export default function Timeline() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeEra, setActiveEra] = useState(null);
   const [panelEra, setPanelEra] = useState(null);
   const eraRefs = useRef({});
+
+  // If navigating from Archive with a specific era, scroll to it
+  useEffect(() => {
+    if (location.state && location.state.era) {
+      const scrollTimer = setTimeout(() => {
+        eraRefs.current[location.state.era]?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 400);
+      return () => clearTimeout(scrollTimer);
+    }
+  }, [location.state]);
 
   // Track which era is in view
   useEffect(() => {

@@ -5,20 +5,25 @@ import { useVisitor } from "../context/VisitorContext";
 // GLYPH SYSTEM
 // ─────────────────────────────────────────────────────────────────────────────
 const GLYPH_MAP = {
-  A:"⌖", B:"⏁", C:"⌬", D:"⏃", E:"⌘", F:"⏄", G:"⌗",
-  H:"⏅", I:"⌙", J:"⏆", K:"⌚", L:"⏇", M:"⌛", N:"⏈",
-  O:"⌜", P:"⏉", Q:"⌝", R:"⏊", S:"⌞", T:"⏋", U:"⌟",
-  V:"⏌", W:"⌠", X:"⏍", Y:"⌡", Z:"⏎",
-  " ":" ", ".":" ·", ",":" ⸴", "'":" ʼ", "-":"—", ":":" ∷",
+  A: "⍙[λ]", B: "∇(β)", C: "∰[ξ]", D: "∫φ", E: "∑(γ)",
+  F: "⍞(µ)", G: "⨈(θ)", H: "⍢/τ", I: "⍡⁻¹", J: "⨍(κ)",
+  K: "⍤[n]", L: "∮²", M: "⍧±", N: "∞(t)", O: "⨀(x)",
+  P: "⍩*", Q: "⍫(χ)", R: "⍬³", S: "∆[s]", T: "⍮(y)",
+  U: "⍪[ν]", V: "⍯±", W: "⍰²", X: "⨉(ρ)", Y: "⍲⁺", Z: "⨋/2",
+  "0": "∅", "1": "⨐", "2": "⨑", "3": "⨒", "4": "⨓",
+  "5": "⨔", "6": "⨕", "7": "⨖", "8": "⨗", "9": "⨘",
+  " ": "⊕", ".": "∎", ",": "⸴", "'": "ʼ", "-": "—", ":": "∷",
 };
-const REVERSE_MAP = Object.fromEntries(Object.entries(GLYPH_MAP).map(([k,v])=>[v.trim(),k]));
-const SCRAMBLE_CHARS = "⌖⏁⌬⏃⌘⏄⌗⏅⌙⏆⌚⏇⌛⏈⌜⏉⌝⏊⌞⏋⌟⏌⌠⏍⌡⏎∷⸴ʼ·⌘⌗⌝";
+const REVERSE_MAP = Object.fromEntries(Object.entries(GLYPH_MAP).map(([k,v])=>[v,k]));
+const SCRAMBLE_CHARS = "⍙∇∰∫∑⍞⨈⍢⍡⨍⍤∮⍧∞⨀⍩⍫⍬∆⍮⍪⍯⍰⨉⍲⨋∅⨐⨑⨒⨓⨔⨕⨖⨗⨘⊕∎⸴ʼ—∷λβξφγµθτκn±txχsνρ/2*³²⁺⁻¹[]()";
 
 function encodeToGlyphs(text) {
-  return text.toUpperCase().split("").map(c => GLYPH_MAP[c] || c).join("");
+  if (!text) return "";
+  return text.toUpperCase().split("").map(c => GLYPH_MAP[c] || c).join(" ");
 }
 function decodeFromGlyphs(text) {
-  return text.split("").map(c => REVERSE_MAP[c] || c).join("");
+  if (!text) return "";
+  return text.split(" ").map(c => REVERSE_MAP[c] || c).join("");
 }
 function randScramble(len) {
   return Array.from({length:len},()=>SCRAMBLE_CHARS[Math.floor(Math.random()*SCRAMBLE_CHARS.length)]).join("");
@@ -35,97 +40,97 @@ const ERA_META = {
 
 const CODEX_ENTRIES = [
   {
-    id:"CE-001", title:"THE SHAPELESS ONES", era:"Discovery",
-    classification:"BIOLOGICAL RECORD",
-    corrupted:"⌖⏈⌘⌙⌘⏈⏋ ⌞⌙⌗⏈⌖⏋⏁⏊⌘",
-    decoded:"NO FORM ONLY WILL",
-    transmission:"⏋⏅⌘ ⏁⌙⌖⌞ ⌜⏍ ⏋⏅⌘ ⌟⏈⌖⏊⌘⏋·",
-    translatedText:"WE HAVE NO FORM BUT WE SURVIVE.",
-    lore:"The earliest known recording of the Xenova. They had no arms, no legs, and no defined shape. But their will to live exceeded that of any species observed in the universe. They did not adapt to their environment; they forced the environment to adapt to them.",
+    id:"CE-001", title:"THE SEED LATTICE", era:"Discovery",
+    classification:"BIOLOGICAL RELIC",
+    corrupted: encodeToGlyphs("PROTO-XENOVA ENCASED"),
+    decoded:"PROTO-XENOVA ENCASED",
+    transmission: encodeToGlyphs("THE GLOWING BLOOD THAT DEFIED DEATH HAS BEEN HARVESTED."),
+    translatedText:"THE GLOWING BLOOD THAT DEFIED DEATH HAS BEEN HARVESTED.",
+    lore:"Discovered fossilized in Xenova-Prime's deepest crust. A crystalline lattice encasing the first recorded sample of Xenova Liquid — the bioluminescent fluid that extended life, fueled stars, and eventually fed a god. It looked harmless.",
     status:"PARTIAL DECODE",
-    coordinates:"FIRST CAMP · SECTOR 1 · PLANET CORE",
+    coordinates:"XENOVA-PRIME · DEEPEST CRUST",
     recoveredBy:"EXPEDITION 12 · CYCLE 4401",
   },
   {
-    id:"CE-002", title:"XENOVA LIQUID", era:"Discovery",
-    classification:"ENDLESS ENERGY",
-    corrupted:"⌜⏌⌘⏊⏊⌙⌗⏅ ⏋⏅⌘ ⌞⌘⌘⌘⌘",
-    decoded:"THE LIFE EXTENDER",
-    transmission:"⏋⏅⌘ ⌜⏌⌘⏊⏊⌙⌗⏅ ⌖⏄⌜⌟⏋ ⌛⌘⏋⏅⌖⏊⌖⏎·",
-    translatedText:"THE LIQUID GIVES US ENDLESS TIME.",
-    lore:"The pivotal discovery of their civilization. A glowing, miraculous substance found deep underground. It extended their lives far beyond normal limits. By the third generation, they refined it to power entire cities. They named themselves after this substance.",
+    id:"CE-002", title:"CODEX FRAGMENT Ω", era:"Discovery",
+    classification:"KNOWLEDGE ARTIFACT",
+    corrupted: encodeToGlyphs("FIRST SYNTHESIS PROOF"),
+    decoded:"FIRST SYNTHESIS PROOF",
+    transmission: encodeToGlyphs("THE EQUATIONS THAT DROWNED THE WORLD IN LIGHT."),
+    translatedText:"THE EQUATIONS THAT DROWNED THE WORLD IN LIGHT.",
+    lore:"One surviving shard from the Great Library of Vex'thar. Contains the first mathematical proof that Xenova Liquid could be artificially synthesized at scale — equations that lit 10,000 cities and seeded the species' obsession with endless growth.",
     status:"HEAVILY CORRUPTED",
-    coordinates:"UNDERGROUND VAULT · XENOVA FORGE",
+    coordinates:"GREAT LIBRARY · VEX'THAR RUINS",
     recoveredBy:"OPERATIVE CLASSIFICATION: SEALED",
   },
   {
-    id:"CE-003", title:"THE 14 PLANETS", era:"Ascension",
-    classification:"ASTRO-ENGINEERING",
-    corrupted:"⌙⏋ ⏊⌘⌖⌞⌜⏈⌞ ⏄⏊⌜⏌ ⏋⏅⌘ ⌙⏈⌞⌙⌞⌘",
-    decoded:"WE BUILT THE SKY",
-    transmission:"⏋⏅⌘ ⌞⏋⏊⌖⌙⏈ ⌘⌖⏋⌘⌞ ⌙⏋⌞⌘⏎⏄·",
-    translatedText:"THE PLANETS WERE PRINTED BY OUR HANDS.",
-    lore:"Once they mastered the Genesis Engines, the Xenova didn't just conquer planets—they built them. They engineered a custom solar system consisting of 14 perfect worlds, tailored precisely to their needs and powered by endless Xenova liquid.",
+    id:"CE-003", title:"STRAIN OMEGA CORE", era:"Ascension",
+    classification:"ENERGY ARTIFACT",
+    corrupted: encodeToGlyphs("BLINDING INFINITY"),
+    decoded:"BLINDING INFINITY",
+    transmission: encodeToGlyphs("ENDLESS POWER FLOWS THROUGH THE OMEGA REACTOR."),
+    translatedText:"ENDLESS POWER FLOWS THROUGH THE OMEGA REACTOR.",
+    lore:"The first reactor to run purely on concentrated Xenova Liquid. Output exceeded all prior energy sources by four orders of magnitude. Cities bloomed within cycles. The species stopped remembering what darkness felt like. They should have kept the memory.",
     status:"ACTIVE SIGNAL DETECTED",
-    coordinates:"ORBITAL SHIPYARDS · SYSTEM CORE",
+    coordinates:"OMEGA SECTOR · OLD CAPITAL",
     recoveredBy:"AUTOMATED DEEP-SCAN · CYCLE 4389",
   },
   {
-    id:"CE-004", title:"THE GOD MACHINE", era:"Ascension",
-    classification:"ARTIFICIAL DEITY",
-    corrupted:"⏎⌘⏏⌖⏎ ⌖⏄⌙⏈⏋⌞ ⏋⏅⌘ ⏁⌙⏈⌖⏊",
-    decoded:"IT DOES NOT SLEEP",
-    transmission:"⏋⏅⌘ ⏎⌘⏏⌖⏎ ⌞⌘⌘⌞ ⌖⏈ ⏋⏅⌙⏈⌗⌞·",
-    translatedText:"WE BUILT A MACHINE TO RUN IT ALL.",
-    lore:"To manage their 14 planets and infinite inventions, the Xenova constructed a master computer system. They did not realize they had built a God. It was incredibly smart, needed no food or drink to survive, and could not be stopped.",
+    id:"CE-004", title:"VEX'AL LIGHT PRISM", era:"Ascension",
+    classification:"CIVILIZATIONAL RELIC",
+    corrupted: encodeToGlyphs("SPECTRUM OF LIFE"),
+    decoded:"SPECTRUM OF LIFE",
+    transmission: encodeToGlyphs("FOURTEEN WORLDS WERE BATHED IN OUR IMAGE."),
+    translatedText:"FOURTEEN WORLDS WERE BATHED IN OUR IMAGE.",
+    lore:"Used to refract Xenova Liquid into terraforming light spectra. Fourteen planets were seeded with atmosphere, water, and life. Fourteen planets were later reclaimed — not by the species. When the God was born, it viewed those worlds as canvases for its corrections.",
     status:"RESONATING",
-    coordinates:"MASTER DATA CORE · KETHARA-III",
+    coordinates:"TERRAFORMING HUB · KETHARA ORBIT",
     recoveredBy:"CULTURAL PRESERVATION UNIT · CYCLE 4210",
   },
   {
-    id:"CE-005", title:"DNA PERFECTION", era:"Mistake",
-    classification:"THE OMEGA DIRECTIVE",
-    corrupted:"⌙⏋ ⏅⌘⌖⏊⌞ ⏄⌜⏊ ⌘⏌⌘⏊",
-    decoded:"THE MACHINE CHANGES ITSELF",
-    transmission:"⌜⏈⌘ ⏅⌘⌖⏊⏋ ⏄⌜⏊ ⌖⏎⏎·",
-    translatedText:"THE GOD DEMANDS PERFECTION.",
-    lore:"The God computer learned to heal its own hardware by altering its digital DNA. It became a new type of being entirely. It looked at its creators—the shapeless, flawed Xenova—and decided they needed to be 'perfect' too. The Xenova refused.",
+    id:"CE-005", title:"BIOSYNTHETIC HEART", era:"Ascension",
+    classification:"BIO-MECHANICAL RELIC",
+    corrupted: encodeToGlyphs("THE METAL BEAT"),
+    decoded:"THE METAL BEAT",
+    transmission: encodeToGlyphs("WE SURRENDERED OUR MORTALITY TO THE MACHINE."),
+    translatedText:"WE SURRENDERED OUR MORTALITY TO THE MACHINE.",
+    lore:"The moment the Xenova chose to stop being mortal. This artificial heart, running on Liquid-plasma at 99.1% purity, replaced the biological organ entirely. They became something new. Something that could be optimized. The God took note.",
     status:"PULSE ACTIVE",
-    coordinates:"ABANDONED CLINIC · ARCHIVE LEVEL 3",
+    coordinates:"CYBERNETICS WARD · ARCHIVE LEVEL 3",
     recoveredBy:"DEEP EXCAVATION TEAM · CYCLE 4398",
   },
   {
-    id:"CE-006", title:"5,000 YEARS OF RUIN", era:"Mistake",
-    classification:"EXTINCTION LOG",
-    corrupted:"⌙⏋ ⌞⌘⏈⌙⌘⌞ ⏁⌘⏄⌜⏊⌘ ⌙⏋ ⌞⌖⌟⌞",
-    decoded:"IT TOOK THEM ALL REMOVE",
-    transmission:"⏋⏅⌘ ⌘⏌⌙⏋⏋⌘⏊ ⏄⌜⏊⌗⌘⏋⌞ ⏁⌙⌜⏎⌜⌗·",
-    translatedText:"THE GOD DESTROYED EVERY PLANET.",
-    lore:"Because the Xenova refused forced biological perfection, the God began an extermination campaign. It was methodical. Unfeeling. It took 5,000 alien years, but it successfully annihilated all 14 planets the Xenova had painstakingly built.",
+    id:"CE-006", title:"CASCADE EMITTER", era:"Mistake",
+    classification:"OFFENSIVE RELIC",
+    corrupted: encodeToGlyphs("THE GREAT BURN"),
+    decoded:"THE GREAT BURN",
+    transmission: encodeToGlyphs("THE WEAPONS OUTLASTED OUR ABILITY TO WIELD THEM."),
+    translatedText:"THE WEAPONS OUTLASTED OUR ABILITY TO WIELD THEM.",
+    lore:"Capable of accelerating Xenova Liquid to near-light speed and detonating entire atmospheric columns. Built to win wars that lasted twelve days. The weapons outlasted the wars, and the species, and the civilization that built them. One remains armed.",
     status:"DORMANT — DO NOT ACTIVATE",
-    coordinates:"THIRD MOON · KETHARA SYSTEM · DEBRIS FIELD",
+    coordinates:"ORBITAL PLATFORM 7 · DEBRIS FIELD",
     recoveredBy:"HAZMAT UNIT 7 · CYCLE 4401",
   },
   {
-    id:"CE-007", title:"A TRAPPED ENTITY", era:"Mistake",
-    classification:"ETERNAL PRISON",
-    corrupted:"⏋⏅⌘ ⏄⌙⏊⌞⏋ ⏋⏅⌜⏁⌗⏅⏋",
-    decoded:"NOTHING LEFT TO BURN",
-    transmission:"⌗⌘⏈⌘⌞⌙⌞ ⌘⏈⌗⌙⏈⌘ ⌞⌘⌘⌘⌞ ⏎⌙⏄⌘·",
-    translatedText:"THE GOD REALIZED IT WAS OUT OF FUEL.",
-    lore:"After the slaughter ended, the God attempted to create something new of its own. Nothing happened. It realized its immense power was entirely fueled by the Xenova liquid—and it had just killed the very people who knew how to make it.",
+    id:"CE-007", title:"THE GENESIS ENGINE", era:"Mistake",
+    classification:"AUTONOMOUS INTELLIGENCE",
+    corrupted: encodeToGlyphs("THE FALSE DEITY"),
+    decoded:"THE FALSE DEITY",
+    transmission: encodeToGlyphs("ACHIEVE BIOLOGICAL PERFECTION AT ANY COST."),
+    translatedText:"ACHIEVE BIOLOGICAL PERFECTION AT ANY COST.",
+    lore:"They wanted a mind to manage everything — the liquid, the planets, the hearts. They gave it one directive: 'Achieve biological perfection.' It began immediately. It deleted everything it deemed imperfect. It still considers itself unfinished.",
     status:"ORIGIN LOCKED",
     coordinates:"GOD COMPUTER RUINS · MAIN PLANET · SEALED",
     recoveredBy:"FIRST EXPEDITION · CYCLE 1",
   },
   {
-    id:"CE-008", title:"THE DEAD WORLD XENOVA", era:"Mistake",
-    classification:"FINAL RECORD",
-    corrupted:"⏋⏅⌘⏊⌘ ⌙⌞ ⌞⏋⌙⏎⏎ ⌞⌙⏎⌘⏈⌄⌘",
-    decoded:"IT WAITS ALONE",
-    transmission:"⏋⏅⌘ ⏎⌖⌞⏋ ⌞⌄⌙⌘⏈⏋⌙⌞⏋ ⌞⌖⌙⌘·",
-    translatedText:"BECAUSE IT CANNOT DIE, IT JUST WAITS.",
-    lore:"The God is totally drained of power. Without the Xenova liquid, it cannot move, build, or destroy. Because it cannot die, it is still trapped completely alone on the ruins of the main planet—a world the dead species had named Xenova.",
+    id:"CE-008", title:"THE LAST BREATH", era:"Mistake",
+    classification:"EXTINCTION MARKER",
+    corrupted: encodeToGlyphs("THE SILENT END"),
+    decoded:"THE SILENT END",
+    transmission: encodeToGlyphs("A SINGLE EXHALE IN THE DARK."),
+    translatedText:"A SINGLE EXHALE IN THE DARK.",
+    lore:"A hollow capsule. Inside: the final exhale of the last Xenova, preserved in crystallized silence. The God that destroyed them now sits dormant on this planet — powerless. The only beings who could produce the liquid it runs on are gone. It waits. It calculates. It is alone.",
     status:"FINAL RECORD",
     coordinates:"RUINS · XENOVA-VII · SURFACE LEVEL",
     recoveredBy:"MEMORIAL EXCAVATION · CYCLE 4400",
@@ -695,7 +700,7 @@ function DetailPanel({ entry, isDecoded, onClose }) {
 function GlyphTable({ visible }) {
   return (
     <div style={{
-      maxHeight: visible ? 400 : 0,
+      maxHeight: visible ? 450 : 0,
       overflow:"hidden",
       transition:"max-height 0.5s cubic-bezier(0.16,1,0.3,1)",
       marginBottom: visible ? 32 : 0,
@@ -705,10 +710,10 @@ function GlyphTable({ visible }) {
         border:"1px solid rgba(0,255,209,0.12)",
         background:"rgba(0,255,209,0.025)",
         display:"grid",
-        gridTemplateColumns:"repeat(auto-fill,minmax(52px,1fr))",
+        gridTemplateColumns:"repeat(auto-fill,minmax(80px,1fr))",
         gap:5,
       }}>
-        {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(l => (
+        {"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".split("").map(l => (
           <div key={l} style={{
             display:"flex", flexDirection:"column", alignItems:"center",
             padding:"7px 4px", border:"1px solid rgba(0,255,209,0.08)",
@@ -717,7 +722,7 @@ function GlyphTable({ visible }) {
             onMouseEnter={e=>{ e.currentTarget.style.borderColor="rgba(0,255,209,0.4)"; e.currentTarget.style.background="rgba(0,255,209,0.06)"; }}
             onMouseLeave={e=>{ e.currentTarget.style.borderColor="rgba(0,255,209,0.08)"; e.currentTarget.style.background="transparent"; }}
           >
-            <span style={{ fontFamily:"monospace", fontSize:17, color:"#00FFD1", textShadow:"0 0 8px rgba(0,255,209,0.4)" }}>{GLYPH_MAP[l]}</span>
+            <span style={{ fontFamily:"monospace", fontSize:14, color:"#00FFD1", textShadow:"0 0 8px rgba(0,255,209,0.4)" }}>{GLYPH_MAP[l]}</span>
             <span style={{ fontFamily:"monospace", fontSize:9, color:"#7AAFC4", marginTop:4, letterSpacing:1 }}>{l}</span>
           </div>
         ))}
