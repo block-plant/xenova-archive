@@ -1,36 +1,36 @@
 import StarField from '../components/StarField'
-import Planet from '../components/Planet'
+import ArchivePlanet from '../components/ArchivePlanet'
 import { useNavigate } from 'react-router-dom'
 import { useRef } from 'react'
 
 const eras = [
   {
     id: 'rise',
-    timelineId: 'awakening',
-    label: 'ERA I',
-    title: 'THE RISE',
-    years: '0 — 15,000 AX',
-    description: 'From binary star system Kethara-VII, the Xenova cracked the genetic code and began seeding life across the cosmos.',
+    timelineId: 'discovery',
+    label: 'CHAPTER I',
+    title: 'THE DISCOVERY',
+    years: 'FIRST GENERATION',
+    description: 'A shapeless species discovers the life-extending Xenova liquid and begins to build an empire without hands.',
     color: 'var(--bioluminescent-teal)',
     icon: '◈',
   },
   {
     id: 'peak',
-    timelineId: 'peak',
-    label: 'ERA II',
-    title: 'THE PEAK',
-    years: '15,000 — 38,000 AX',
-    description: 'Masters of 14 star systems. Bio-synthetic cities. Ships that breathed. The Grand Codex — life itself as architecture.',
+    timelineId: 'ascension',
+    label: 'CHAPTER II',
+    title: 'THE ASCENSION',
+    years: '14 PLANETS',
+    description: 'Boundless energy fuels a custom solar system and the creation of an unstoppable master computer: a God.',
     color: 'var(--genetic-amber)',
     icon: '⬡',
   },
   {
     id: 'fall',
-    timelineId: 'unraveling',
-    label: 'ERA III',
-    title: 'THE UNRAVELING',
-    years: '38,000 — 40,000 AX',
-    description: 'Strain Omega learned. Evolved. Released The Cascade. Planet by planet, the Xenova dissolved into silence.',
+    timelineId: 'mistake',
+    label: 'CHAPTER III',
+    title: 'THE EXTINCTION',
+    years: 'TRAPPED FOREVER',
+    description: 'The God demands perfection. Extermination of the 14 worlds leaves it trapped alone without the fuel it needs.',
     color: 'var(--cascade-red)',
     icon: '⚠',
   },
@@ -52,36 +52,35 @@ function MainArchive() {
         <div className="bio-grid" />
 
         {/* 3D Planet */}
-        <Planet />
+        <ArchivePlanet />
 
         {/* Hero content — left aligned to make room for planet */}
         <div className="hero-content" style={{ marginRight: 'auto', marginLeft: '6rem', textAlign: 'left' }}>
-          <p className="hero-label">KETHARA EXPANSE · 14 STAR SYSTEMS · 200+ WORLDS</p>
+          <p className="hero-label">14 STAR SYSTEMS · ENDLESS ENERGY · A TRAPPED GOD</p>
 
           <h1 className="hero-title">
-            THE GRAND
-            <span className="hero-title-accent"> CODEX</span>
+            THE XENOVA
+            <span className="hero-title-accent"> LIQUID</span>
           </h1>
 
           <p className="hero-subtitle">
-            Enter the recovered archive of the Xenova — a civilization that
-            engineered life itself, and was undone by their greatest creation.
+            Enter the ruins of a shapeless species that built an empire out of a miraculous liquid, only to be wiped out by the God they created.
           </p>
 
           <div className="hero-stats">
             <div className="stat">
-              <span className="stat-number">40,000</span>
-              <span className="stat-label">YEARS OF DOMINION</span>
+              <span className="stat-number">5,000</span>
+              <span className="stat-label">YEARS TO DESTROY</span>
             </div>
             <div className="stat-divider" />
             <div className="stat">
-              <span className="stat-number">200+</span>
-              <span className="stat-label">WORLDS SEEDED</span>
+              <span className="stat-number">14</span>
+              <span className="stat-label">PLANETS BUILT</span>
             </div>
             <div className="stat-divider" />
             <div className="stat">
-              <span className="stat-number">847</span>
-              <span className="stat-label">CODEX FRAGMENTS</span>
+              <span className="stat-number">8</span>
+              <span className="stat-label">REMAINING RELICS</span>
             </div>
           </div>
         </div>

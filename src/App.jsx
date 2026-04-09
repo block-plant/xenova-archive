@@ -6,7 +6,8 @@ import MainArchive from './pages/MainArchive'
 import Artifacts from './pages/Artifacts'
 import Timeline from './pages/Timeline'
 import Codex from './pages/Codex'
-import KetharaMap from './pages/KetharaMap'
+import KetharaApp from './pages/KetharaApp'
+import Terminal from './pages/Terminal'
 import GlobalPassport from './components/GlobalPassport'
 import NavBar from './components/NavBar'
 
@@ -57,7 +58,8 @@ function App() {
           <Route path="/artifacts" element={<Artifacts />} />
           <Route path="/timeline" element={<Timeline />} />
           <Route path="/codex" element={<Codex />} />
-          <Route path="/map" element={<KetharaMap />} />
+          <Route path="/map" element={<KetharaApp />} />
+          <Route path="/terminal" element={<Terminal />} />
         </Routes>
       </Router>
     </VisitorProvider>

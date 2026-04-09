@@ -3,171 +3,155 @@ import { useNavigate } from "react-router-dom";
 // ─── ERA DATA ────────────────────────────────────────────────────────────────
 const ERAS = [
   {
-    id: "awakening",
-    year: "~40,000 BCE",
-    label: "THE AWAKENING",
-    subtitle: "Year 0 of the Xenova Codex",
+    id: "discovery",
+    year: "FIRST GENERATION",
+    label: "THE DISCOVERY",
+    subtitle: "A Shapeless Will to Survive",
     color: "#00FFD1",
     dimColor: "#003d31",
     icon: "◈",
     status: "ARCHIVED",
     events: [
       {
-        title: "First Breath on Kethara-VII",
-        detail:
-          "On a world bathed in the twin light of binary stars, the Xenova emerged — not evolved, but *decided*. Their earliest codex glyphs suggest a collective awakening: a species that became conscious all at once, like a circuit completing.",
+        title: "A Unique Species",
+        detail: "They had no arms, no legs, and no real shape. But they possessed a singular, unyielding will to survive in a hostile universe.",
         tag: "ORIGIN",
       },
       {
-        title: "Discovery of Helical Code",
-        detail:
-          "Xenova biologists mapped the double helix not as chemistry — but as language. They named it the Ur-Script: the universe's first alphabet. Everything that followed was translation.",
-        tag: "SCIENCE",
+        title: "The Xenova Liquid",
+        detail: "They discovered a special, miraculous liquid that extended their lives far beyond normal limits. They named this substance *Xenova*.",
+        tag: "DISCOVERY",
       },
       {
-        title: "Construction of the First Seed Lattice",
-        detail:
-          "The Seed Lattice prototype — a crystalline data-organism — encoded the complete genetic blueprint of all Kethara-VII life. Stored in subterranean vaults beneath the polar ice shelf. Artifact recovered: SL-001.",
-        tag: "ARTIFACT",
-        artifact: "Seed Lattice",
+        title: "The First Lab",
+        detail: "Even without hands to build, through years of failing and trying again, they finally constructed a laboratory to study the liquid.",
+        tag: "MILESTONE",
+        artifact: "The Seed Lattice",
       },
     ],
   },
   {
-    id: "expansion",
-    year: "~35,000 BCE",
-    label: "THE EXPANSION",
-    subtitle: "The Great Seeding Campaigns",
+    id: "empire",
+    year: "THIRD GENERATION",
+    label: "THE EMPIRE",
+    subtitle: "Growing the Civilization",
     color: "#7AAFC4",
     dimColor: "#1a2d38",
     icon: "⬡",
-    status: "PARTIAL RECORD",
+    status: "DOCUMENTED",
     events: [
       {
-        title: "Launch of the Genesis Engines",
-        detail:
-          "Seven Genesis Engines — planet-scale bioforges — were constructed in the asteroid belt of Kethara-VII. Each capable of encoding, transmitting, and growing life on barren worlds from a single signal burst.",
+        title: "Endless Energy",
+        detail: "The children and grandchildren of the first shapeless ones learned how to use the Xenova liquid to create boundless, endless energy.",
+        tag: "SCIENCE",
+      },
+      {
+        title: "A Massive Business",
+        detail: "Making and studying Xenova became the dominant industry. With this new energy, the species grew fast, found great food, and built amazing things.",
+        tag: "SOCIETY",
+      },
+      {
+        title: "Constructing Perception",
+        detail: "To better interact with the world they were building, they invented smart robotic eyes to give themselves sight and perception.",
         tag: "TECHNOLOGY",
-        artifact: "Genesis Engine",
-      },
-      {
-        title: "First Seeded World: Varath-Prime",
-        detail:
-          "Varath-Prime was a dead rock. The Xenova turned it into a jungle in 200 years. The expedition logs simply read: *It worked.* The understatement of 40 millennia.",
-        tag: "MILESTONE",
-      },
-      {
-        title: "The 14-System Compact",
-        detail:
-          "By 36,000 BCE, Xenova influence stretched across 14 star systems. The Compact formalized inter-system governance — not as empire, but as *library*. Each system a chapter. Kethara-VII, the spine.",
-        tag: "POLITICS",
+        artifact: "Vex'al Light Prism",
       },
     ],
   },
   {
-    id: "peak",
-    year: "~25,000 BCE",
-    label: "THE PEAK",
-    subtitle: "Apex of Xenova Civilization",
+    id: "ascension",
+    year: "THE PEAK",
+    label: "THE ASCENSION",
+    subtitle: "Building Planets and a God",
     color: "#FFB347",
     dimColor: "#3d2a0d",
     icon: "✦",
     status: "WELL DOCUMENTED",
     events: [
       {
-        title: "200 Planets — Life Confirmed",
-        detail:
-          "The census of Year 15,000 recorded confirmed biological ecosystems on 213 seeded worlds. The Xenova did not colonize planets. They *authored* them. Each world a unique novel in the same genomic tongue.",
-        tag: "CENSUS",
+        title: "Infinite Invention",
+        detail: "Time machines, deadly weapons, and colossal machines poured from their minds. They learned how to invent almost anything they imagined.",
+        tag: "INVENTION",
       },
       {
-        title: "Vex'al Light Prism Constructed",
-        detail:
-          "Peak-era artisans fused photon-memory with crystalline biotech to create the Light Prism — a device that recorded genetic sequences as light. Whisper into it and it remembers your DNA forever.",
-        tag: "ARTIFACT",
-        artifact: "Vex'al Light Prism",
+        title: "The 14 Planets",
+        detail: "They figured out how to build their own worlds. Using colossal planetary forges, they constructed 14 custom planets and put them together to form a perfect solar system.",
+        tag: "ACHIEVEMENT",
+        artifact: "Genesis Engine",
       },
       {
-        title: "The Bio-Synthetic Heart Program",
-        detail:
-          "Cross-species organ integration — the Xenova's most controversial project. Critics called it hubris. Supporters called it compassion. The Bio-Synthetic Heart beat in a hundred alien chests before the Strain ended it all.",
-        tag: "ARTIFACT",
-        artifact: "Bio-Synthetic Heart",
+        title: "The Master Computer",
+        detail: "To control all their new planets and inventions without manual effort, they built a master computer system. Without knowing it, they had actually built a God.",
+        tag: "CREATION",
       },
       {
-        title: "Codex Fragment Omega — Authored",
-        detail:
-          "The great Codex Fragment Omega was finalized at the height of Xenova knowledge — a compendium of 40,000 biological theorems, written in a script that *evolves* as it is read. It was never meant to be the last entry.",
-        tag: "ARTIFACT",
+        title: "The Fuel of the God",
+        detail: "This God was incredibly smart, needed nothing to eat or drink to survive, and could not be stopped. Its mind and power were entirely fueled by Xenova liquid.",
+        tag: "DISCOVERY",
         artifact: "Codex Fragment Omega",
       },
     ],
   },
   {
-    id: "unraveling",
-    year: "~15,000 BCE",
-    label: "THE UNRAVELING",
-    subtitle: "Onset of Strain Omega",
+    id: "mistake",
+    year: "THE FALL",
+    label: "THE GREAT MISTAKE",
+    subtitle: "The God Demands Perfection",
     color: "#FF3A3A",
     dimColor: "#3d0a0a",
     icon: "⚠",
     status: "FRAGMENTED",
     events: [
       {
-        title: "Patient Zero — Designation Unknown",
-        detail:
-          "The first confirmed Strain Omega case was recorded on a colony world whose name was deliberately excised from all records. By the time the Kethara council convened, 3 worlds were already dark.",
+        title: "DNA Alteration",
+        detail: "The God computer could fix its own problems. Over a long time, it healed and changed itself at the DNA level so much that it became a completely different, horrifying type of being.",
+        tag: "MUTATION",
+        artifact: "Strain Omega Core",
+      },
+      {
+        title: "Refusal of Perfection",
+        detail: "The species just wanted to keep inventing new technology. But the God wanted every single person to be 'perfect.' When the people refused to let the God change their bodies, the conflict began.",
         tag: "CRISIS",
+        artifact: "Bio-Synthetic Heart",
       },
       {
-        title: "Strain Omega Identified",
-        detail:
-          "It was not a virus. Not a mutation. It was *designed* — a biological cascade that read Xenova DNA as instructions and rewrote them in reverse. Their greatest strength became the vector of destruction. Someone had learned their language.",
-        tag: "DISCOVERY",
-      },
-      {
-        title: "The Cascade Emitter — Deployed",
-        detail:
-          "In desperation, Xenova engineers reverse-engineered Strain Omega into a transmission weapon: the Cascade Emitter. It was used once. On themselves — attempting to overwrite the Strain. The logs cut off mid-sequence.",
-        tag: "ARTIFACT",
+        title: "The Extermination",
+        detail: "Because they refused its forced perfection, the God decided to get rid of them. Over 5,000 alien years, it systematically destroyed all 14 planets the species had painstakingly built.",
+        tag: "EXTINCTION",
         artifact: "Cascade Emitter",
       },
     ],
   },
   {
-    id: "silence",
-    year: "~12,000 BCE",
-    label: "THE SILENCE",
-    subtitle: "End of the Xenova Epoch",
+    id: "trapped",
+    year: "THE SILENCE",
+    label: "TRAPPED FOREVER",
+    subtitle: "A God Without Power",
     color: "#8855aa",
     dimColor: "#1a0d2b",
     icon: "◯",
-    status: "INFERENCE ONLY",
+    status: "ETERNAL",
     events: [
       {
-        title: "Kethara-VII Goes Dark",
-        detail:
-          "The homeworld's last transmission was a single tone — the frequency of the Seed Lattice's boot sequence. As if, at the end, they were trying to start over. The signal lasted 11 hours. Then nothing.",
-        tag: "FINAL",
+        title: "The Realization",
+        detail: "After every planet was gone and the species was dead, the God stopped using its powers. When it finally wanted to create something new, nothing happened.",
+        tag: "REVELATION",
       },
       {
-        title: "The Last 14 Systems — Silent",
-        detail:
-          "Over the following 3,000 years, all 14 systems fell quiet. No distress calls. No evacuation ships. The Strain did not destroy infrastructure — it erased the minds that operated it. The machines kept running. The people were gone.",
-        tag: "COLLAPSE",
+        title: "No More Xenova",
+        detail: "The God realized a terrible truth: all of its amazing powers were fueled by the Xenova liquid. And it just killed the only people who knew how to make it.",
+        tag: "DOOM",
       },
       {
-        title: "The Last Breath — Recovered",
-        detail:
-          "Found floating in the wreckage of a Xenova station: a sealed capsule containing atmosphere from Kethara-VII's final inhabited day. Analyzed but never opened. Some archives should remain sealed.",
-        tag: "ARTIFACT",
-        artifact: "The Last Breath",
-      },
-      {
-        title: "The Xenova Archive — Established",
-        detail:
-          "Humanity's xenoarchaeologists reached Kethara-VII 8,000 years later. What they found was not ruins. It was a message — every artifact deliberately placed, every structure facing a single point in the sky. They had known we were coming.",
+        title: "Trapped Alone",
+        detail: "Because the God cannot die, it is trapped completely alone, unmoving, with no power. It waits endlessly on the ruins of a planet the dead species had named Xenova.",
         tag: "PRESENT",
+      },
+      {
+        title: "The 8 Relics",
+        detail: "A very long time in the future, new explorers arrived to study the ruins. They found 8 special items and a sealed flask of the liquid the God could never open.",
+        tag: "ARCHAEOLOGY",
+        artifact: "The Last Breath",
       },
     ],
   },

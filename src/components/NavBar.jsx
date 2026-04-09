@@ -6,6 +6,7 @@ const navLinks = [
   { label: 'TIMELINE',   path: '/timeline' },
   { label: "VEX'AL",     path: '/codex' },
   { label: 'KETHARA',    path: '/map' },
+  { label: 'TERMINAL',   path: '/terminal' },
 ]
 
 function NavBar() {
@@ -20,22 +21,24 @@ function NavBar() {
 
       {/* Back and Logo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-        <button 
-          onClick={() => navigate(-1)}
-          className="nav-link"
-          style={{ 
-            background: 'transparent', 
-            border: 'none', 
-            cursor: 'pointer', 
-            fontFamily: 'inherit',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: 0
-          }}
-        >
-          <span>←</span> BACK
-        </button>
+        {location.pathname !== '/archive' && (
+          <button 
+            onClick={() => navigate('/archive')}
+            className="nav-link"
+            style={{ 
+              background: 'transparent', 
+              border: 'none', 
+              cursor: 'pointer', 
+              fontFamily: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: 0
+            }}
+          >
+            <span>←</span> BACK
+          </button>
+        )}
 
         <Link to="/archive" className="nav-logo">
           <span className="nav-logo-x">X</span>
