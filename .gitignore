@@ -23,3 +23,15 @@ dist-ssr
 *.sln
 *.sw?
 *.md
+
+# AI / Agent Configuration Files
+.claude
+.windsurfrules
+.cursorrules
+.cursorignore
+.cline_memory/
+cline_docs/
+.roo/
+.gemini
+.geminiignore
+.antigravityignore
