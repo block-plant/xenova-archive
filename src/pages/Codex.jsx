@@ -470,7 +470,7 @@ function DetailPanel({ entry, isDecoded, onClose }) {
   }, [entry]);
 
   if (!entry && !open) return null;
-  const era = ERA_META[entry?.era] || ERA_META.Rise;
+  const era = ERA_META[entry?.era] || ERA_META.Discovery;
 
   return (
     <div style={{
@@ -904,7 +904,7 @@ export default function Codex() {
               }}
                 onMouseEnter={e=>{ if(!active){ e.currentTarget.style.borderColor=col+"60"; e.currentTarget.style.color=col; }}}
                 onMouseLeave={e=>{ if(!active){ e.currentTarget.style.borderColor="rgba(0,255,209,0.15)"; e.currentTarget.style.color="#7AAFC4"; }}}
-              >{era === "Unraveling" ? "◌ UNRAVELING" : era === "Rise" ? "◈ RISE" : era === "Peak" ? "◉ PEAK" : "◎ ALL"}</button>
+              >{era === "Mistake" ? "◌ MISTAKE" : era === "Discovery" ? "◈ DISCOVERY" : era === "Ascension" ? "◉ ASCENSION" : "◎ ALL"}</button>
             );
           })}
           <span style={{ fontFamily:"monospace", fontSize:9, color:"#7AAFC450", letterSpacing:2, marginLeft:4 }}>
@@ -946,7 +946,7 @@ export default function Codex() {
             XENOVA ARCHIVE · CODEX DECODER v5.0
           </span>
           <span style={{ fontFamily:"monospace", fontSize:9, color:"#7AAFC430", letterSpacing:3 }}>
-            {CODEX_ENTRIES.length} TRANSMISSIONS · {CODEX_ENTRIES.filter(e=>e.era==="Unraveling").length} OMEGA CLASS · {decodedIds.size} UNLOCKED
+            {CODEX_ENTRIES.length} TRANSMISSIONS · {CODEX_ENTRIES.filter(e=>e.era==="Mistake").length} OMEGA CLASS · {decodedIds.size} UNLOCKED
           </span>
         </div>
       </div>

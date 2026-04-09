@@ -491,8 +491,9 @@ function EventPanel({ era, onClose }) {
         background:
           "linear-gradient(180deg, #060a14 0%, #050810 100%)",
         borderLeft: `1px solid ${era.color}44`,
-        zIndex: 50,
+        zIndex: 200,
         overflowY: "auto",
+        scrollbarWidth: "none",
         animation: "panel-slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
       }}
     >
@@ -1106,7 +1107,7 @@ export default function Timeline() {
               position: "fixed",
               inset: 0,
               background: "rgba(5,8,16,0.5)",
-              zIndex: 49,
+              zIndex: 199,
             }}
             onClick={() => setPanelEra(null)}
           />
