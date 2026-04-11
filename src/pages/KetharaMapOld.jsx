@@ -16,7 +16,7 @@ import { useVisitor } from "../context/VisitorContext";
 import StarField from "../components/StarField";
 import gsap from "gsap";
 
-/* ─── PLANETS DATA ─────────────────────────────────────────────── */
+/* planets data */
 const planetsData = [
     {
         id: 1,
@@ -245,7 +245,7 @@ const planetsData = [
     },
 ];
 
-/* ─── SVG CONNECTION MAP ────────────────────────────────────────── */
+/* svg connection map */
 const connections = [
     [1, 14], [2, 14], [3, 14], [4, 14], [5, 14],
     [6, 14], [7, 14], [8, 14], [9, 14], [10, 14],
@@ -255,14 +255,14 @@ const connections = [
     [9, 10], [10, 11], [9, 8],
 ];
 
-/* ─── STATUS COLOR ──────────────────────────────────────────────── */
+/* status color */
 function statusColor(status) {
     if (status === "ACTIVE") return "#00ffdd";
     if (status === "SCANNING") return "#ffaa00";
     return "#ff4455";
 }
 
-/* ─── COMPONENT ─────────────────────────────────────────────────── */
+/* component */
 export default function GalacticMap() {
     const scrollRef = useRef(null);
     const svgRef = useRef(null);
@@ -278,7 +278,7 @@ export default function GalacticMap() {
     const [cursorHover, setCursorHover] = useState(false);
     const [activeEra, setActiveEra] = useState("Discovery");
 
-    /* ── Locomotive Scroll init ── */
+    /* locomotive scroll init */
     useEffect(() => {
         let locomotiveScroll;
         (async () => {
@@ -297,7 +297,7 @@ export default function GalacticMap() {
         return () => locomotiveScroll?.destroy?.();
     }, []);
 
-    /* ── GSAP: Draw SVG lines on mount ── */
+    /* gsap: draw svg lines on mount */
     useEffect(() => {
         if (!svgRef.current) return;
         const paths = svgRef.current.querySelectorAll(".connect-line");
@@ -323,7 +323,7 @@ export default function GalacticMap() {
         }
     }, []);
 
-    /* ── Custom cursor ── */
+    /* custom cursor */
     useEffect(() => {
         const move = (e) => {
             setCursorPos({ x: e.clientX, y: e.clientY });
@@ -346,7 +346,7 @@ export default function GalacticMap() {
         return () => window.removeEventListener("mousemove", move);
     }, []);
 
-    /* ── Era auto-scroll ── */
+    /* era auto-scroll */
     useEffect(() => {
         const eras = ["Discovery", "Peak", "Correction"];
         let i = 0;
@@ -376,10 +376,10 @@ export default function GalacticMap() {
         );
     };
 
-    /* ─────────────────────── RENDER ───────────────────────────────── */
+    /* render */
     return (
         <>
-            {/* ── Scoped CSS ── */}
+            {/* scoped css */}
             <style>{`
         /* === XENOVA SCOPED STYLES === */
         .xenova-root * { box-sizing: border-box; }
@@ -671,7 +671,7 @@ export default function GalacticMap() {
         .data-value { color: #a0e8d8; text-align: right; max-width: 200px; line-height: 1.4; }
       `}</style>
 
-            {/* ── Custom cursor ── */}
+            {/* custom cursor */}
             <div
                 ref={cursorRef}
                 className={`xenova-cursor${cursorHover ? " hovering" : ""}`}
@@ -683,7 +683,7 @@ export default function GalacticMap() {
                 style={{ left: 0, top: 0 }}
             />
 
-            {/* ── Root ── */}
+            {/* root */}
             <div className="xenova-root" style={{ display: "flex", height: "100vh", overflow: "hidden", position: "relative", zIndex: 1 }}>
 
                 {/* ══ LEFT SIDEBAR ════════════════════════════════════════════ */}
@@ -739,7 +739,7 @@ export default function GalacticMap() {
 
                     {/* Global Passport acts as Visitor tracking, removed local visitor card here */}
 
-                    {/* ── SVG MAP ── */}
+                    {/* svg map */}
                     <svg
                         ref={svgRef}
                         viewBox="0 0 620 560"
@@ -780,7 +780,7 @@ export default function GalacticMap() {
                         <circle cx="313" cy="303" r="200" fill="none" stroke="rgba(0,255,221,0.03)" strokeWidth="80" />
                         <circle cx="313" cy="303" r="140" fill="none" stroke="rgba(0,255,221,0.04)" strokeWidth="60" />
 
-                        {/* ── CONNECTION LINES ── */}
+                        {/* connection lines */}
                         {connections.map(([a, b], i) => {
                             const pa = getPlanetById(a);
                             const pb = getPlanetById(b);
@@ -803,7 +803,7 @@ export default function GalacticMap() {
                             );
                         })}
 
-                        {/* ── PLANET NODES ── */}
+                        {/* planet nodes */}
                         {planetsData.map((planet) => {
                             const isSelected = selectedPlanet?.id === planet.id;
                             const isHovered = hoveredPlanet === planet.id;
@@ -899,7 +899,7 @@ export default function GalacticMap() {
                         })}
                     </svg>
 
-                    {/* ── HOLOGRAPHIC DATA PANEL ── */}
+                    {/* holographic data panel */}
                     <AnimatePresence>
                         {selectedPlanet && (
                             <motion.div
@@ -1001,7 +1001,7 @@ export default function GalacticMap() {
                         )}
                     </AnimatePresence>
 
-                    {/* ── CLEAN TIMELINE ── */}
+                    {/* clean timeline */}
                     <div
                         ref={timelineRef}
                         style={{

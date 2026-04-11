@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useVisitor } from "../context/VisitorContext";
 
-// ─────────────────────────────────────────────────────────────────────────────
 // GLYPH SYSTEM
-// ─────────────────────────────────────────────────────────────────────────────
 const GLYPH_MAP = {
   A: "⍙[λ]", B: "∇(β)", C: "∰[ξ]", D: "∫φ", E: "∑(γ)",
   F: "⍞(µ)", G: "⨈(θ)", H: "⍢/τ", I: "⍡⁻¹", J: "⨍(κ)",
@@ -29,9 +27,7 @@ function randScramble(len) {
   return Array.from({length:len},()=>SCRAMBLE_CHARS[Math.floor(Math.random()*SCRAMBLE_CHARS.length)]).join("");
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // CODEX DATA
-// ─────────────────────────────────────────────────────────────────────────────
 const ERA_META = {
   Discovery:  { color:"#00FFD1", label:"DISCOVERY ERA",  icon:"◈" },
   Ascension:  { color:"#FFB347", label:"ASCENSION ERA",  icon:"◉" },
@@ -137,9 +133,7 @@ const CODEX_ENTRIES = [
   },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
 // PARTICLE CANVAS
-// ─────────────────────────────────────────────────────────────────────────────
 function ParticleCanvas() {
   const canvasRef = useRef(null);
   useEffect(() => {
@@ -185,9 +179,7 @@ function ParticleCanvas() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // SCANLINE OVERLAY
-// ─────────────────────────────────────────────────────────────────────────────
 function ScanlineOverlay() {
   const [pos, setPos] = useState(0);
   useEffect(() => {
@@ -210,9 +202,7 @@ function ScanlineOverlay() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // SCRAMBLE + DECODE HOOK
-// ─────────────────────────────────────────────────────────────────────────────
 function useScrambleDecode(target, active, delay = 0) {
   const [display, setDisplay] = useState(randScramble(target.length));
   const [done, setDone] = useState(false);
@@ -249,9 +239,7 @@ function useScrambleDecode(target, active, delay = 0) {
   return { display, done };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // WAVEFORM VISUALIZER (purely aesthetic)
-// ─────────────────────────────────────────────────────────────────────────────
 function WaveformViz({ color, active }) {
   const canvasRef = useRef(null);
   const phaseRef = useRef(0);
@@ -309,9 +297,7 @@ function WaveformViz({ color, active }) {
   return <canvas ref={canvasRef} style={{ width:"100%", height:48, display:"block" }} />;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // CODEX CARD
-// ─────────────────────────────────────────────────────────────────────────────
 function CodexCard({ entry, isActive, isDecoded, onSelect, onDecoded }) {
   const [decoding, setDecoding] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -453,9 +439,7 @@ function CodexCard({ entry, isActive, isDecoded, onSelect, onDecoded }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // DETAIL PANEL (slide-in from right)
-// ─────────────────────────────────────────────────────────────────────────────
 function DetailPanel({ entry, isDecoded, onClose }) {
   const [open, setOpen] = useState(false);
   const [inputText, setInputText] = useState("");
@@ -694,9 +678,7 @@ function DetailPanel({ entry, isDecoded, onClose }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // GLYPH TABLE
-// ─────────────────────────────────────────────────────────────────────────────
 function GlyphTable({ visible }) {
   return (
     <div style={{
@@ -731,9 +713,7 @@ function GlyphTable({ visible }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // MAIN PAGE
-// ─────────────────────────────────────────────────────────────────────────────
 export default function Codex() {
   const [selectedEntry, setSelectedEntry] = useState(null);
   const { decodedCodexEntries: decodedIds, addDecodedEntry } = useVisitor();
@@ -779,7 +759,7 @@ export default function Codex() {
         transition:"opacity 0.7s ease, transform 0.7s ease",
       }}>
 
-        {/* ── HEADER ── */}
+        {/* header */}
         <div style={{ marginBottom:44 }}>
           <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:18 }}>
             <a href="/archive" style={{
@@ -823,10 +803,10 @@ export default function Codex() {
           </p>
         </div>
 
-        {/* ── PASSPORT ── */}
+        {/* passport */}
         {/* Removed local passport in favor of GlobalPassport widget */}
 
-        {/* ── GLOBAL CIPHER ── */}
+        {/* global cipher */}
         <div style={{
           marginBottom:32, padding:"20px 22px",
           border:"1px solid rgba(0,255,209,0.15)",
@@ -889,7 +869,7 @@ export default function Codex() {
 
         <GlyphTable visible={showGlyphs} />
 
-        {/* ── ERA FILTER ── */}
+        {/* era filter */}
         <div style={{ display:"flex", gap:8, marginBottom:28, flexWrap:"wrap", alignItems:"center" }}>
           {eras.map(era => {
             const col = eraButtonColor(era);
@@ -912,7 +892,7 @@ export default function Codex() {
           </span>
         </div>
 
-        {/* ── GRID ── */}
+        {/* grid */}
         <div style={{
           display:"grid",
           gridTemplateColumns:"repeat(auto-fill,minmax(310px,1fr))",
@@ -935,7 +915,7 @@ export default function Codex() {
           ))}
         </div>
 
-        {/* ── FOOTER ── */}
+        {/* footer */}
         <div style={{
           marginTop:64, paddingTop:24,
           borderTop:"1px solid rgba(0,255,209,0.08)",

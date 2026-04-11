@@ -10,9 +10,7 @@ import {
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, useGLTF, Environment, Center, Clone, Bounds } from '@react-three/drei';
 
-// ─────────────────────────────────────────────────────────────────────────────
 // ARTIFACT DATA
-// ─────────────────────────────────────────────────────────────────────────────
 const ARTIFACTS = [
   {
     id: 'seed-lattice', index: '01', name: 'The Seed Lattice',
@@ -119,17 +117,13 @@ const ARTIFACTS = [
   },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
 // EASING + SPRING PRESETS  — single source of truth
-// ─────────────────────────────────────────────────────────────────────────────
 const EASE_EXPO = [0.16, 1, 0.3, 1];
 const EASE_INOUT = [0.45, 0, 0.55, 1];
 const SPR_SOFT = { type: 'spring', stiffness: 55, damping: 18, mass: 0.9 };
 const SPR_MEDIUM = { type: 'spring', stiffness: 95, damping: 22, mass: 0.9 };
 
-// ─────────────────────────────────────────────────────────────────────────────
 // GLOBAL STYLES
-// ─────────────────────────────────────────────────────────────────────────────
 const GLOBAL_STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Syne+Mono&family=Barlow+Condensed:ital,wght@0,200;0,300;0,400;0,600;1,200;1,300&display=swap');
 
@@ -145,18 +139,18 @@ const GLOBAL_STYLES = `
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; cursor: none !important; }
 
-  /* ── Scrollbar ── */
+  /* scrollbar */
   ::-webkit-scrollbar { width: 3px; }
   ::-webkit-scrollbar-thumb { background: rgba(0,245,212,.22); border-radius: 2px; }
 
-  /* ── Cursor dot (instant) ── */
+  /* cursor dot (instant) */
   .xc-dot {
     position: fixed; pointer-events: none; z-index: 99999;
     width: 6px; height: 6px; border-radius: 50%;
     background: var(--liquid); transform: translate(-50%,-50%);
     will-change: left, top;
   }
-  /* ── Cursor ring (lagged) ── */
+  /* cursor ring (lagged) */
   .xc-ring {
     position: fixed; pointer-events: none; z-index: 99998;
     width: 34px; height: 34px; border-radius: 50%;
@@ -170,7 +164,7 @@ const GLOBAL_STYLES = `
   }
   .xc-ring.xc-big { width: 76px; height: 76px; opacity: 0.85; }
 
-  /* ── Ripple ── */
+  /* ripple */
   @keyframes ripple {
     from { transform: translate(-50%,-50%) scale(0.7); opacity: 0.55; }
     to   { transform: translate(-50%,-50%) scale(3.2); opacity: 0; }
@@ -182,7 +176,7 @@ const GLOBAL_STYLES = `
     animation: ripple 0.85s cubic-bezier(0,0,0.2,1) forwards;
   }
 
-  /* ── Glitch reveal ── */
+  /* glitch reveal */
   @keyframes glitch-in {
     0%   { clip-path: inset(44% 0 44% 0); transform: translateX(-6px); opacity: 0.4; }
     14%  { clip-path: inset(4%  0 84% 0); transform: translateX( 5px); }
@@ -193,21 +187,21 @@ const GLOBAL_STYLES = `
   }
   .glitch-reveal { animation: glitch-in 0.58s steps(1) forwards; }
 
-  /* ── Pulse glow ── */
+  /* pulse glow */
   @keyframes pulse-glow {
     0%,100% { box-shadow: 0 0 18px var(--shadow, rgba(0,245,212,.10)); }
     50%     { box-shadow: 0 0 55px var(--shadow, rgba(0,245,212,.28)), 0 0 110px var(--shadow, rgba(0,245,212,.06)); }
   }
   .art-glow { animation: pulse-glow 4.5s ease-in-out infinite; }
 
-  /* ── Float — images only ── */
+  /* float — images only */
   @keyframes float-y {
     0%,100% { transform: translateY(0px); }
     50%      { transform: translateY(-11px); }
   }
   .art-float { animation: float-y 7s ease-in-out infinite; }
 
-  /* ── Nebula drift ── */
+  /* nebula drift */
   @keyframes nd1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(36px,-26px) scale(1.05)} }
   @keyframes nd2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-26px,16px) scale(1.04)} }
   @keyframes nd3 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(16px,36px) scale(1.07)} }
@@ -215,46 +209,46 @@ const GLOBAL_STYLES = `
   .nb2 { animation: nd2 30s ease-in-out infinite; }
   .nb3 { animation: nd3 38s ease-in-out infinite 4s; }
 
-  /* ── Hero rings pulse ── */
+  /* hero rings pulse */
   @keyframes ring-pulse {
     0%,100% { transform: scale(1);    opacity: 0.55; }
     50%      { transform: scale(1.03); opacity: 0.95; }
   }
 
-  /* ── Ticker ── */
+  /* ticker */
   @keyframes ticker { from { transform: translateX(0) } to { transform: translateX(-50%) } }
   .ticker-inner { animation: ticker 30s linear infinite; white-space: nowrap; display: inline-block; will-change: transform; }
 
-  /* ── Scanlines ── */
+  /* scanlines */
   .scanlines::after {
     content: ''; position: absolute; inset: 0; pointer-events: none;
     background: repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.06) 3px,rgba(0,0,0,.06) 4px);
     z-index: 1;
   }
 
-  /* ── Stat rows ── */
+  /* stat rows */
   .stat-row { border-bottom: 1px solid rgba(255,255,255,.04); transition: background 0.22s ease; }
   .stat-row:hover { background: rgba(255,255,255,.025); }
 
-  /* ── God silhouette ── */
+  /* god silhouette */
   @keyframes god-breathe { 0%,100%{opacity:0} 50%{opacity:.04} }
   .god-sil { animation: god-breathe 14s ease-in-out infinite; transition: opacity 3.5s ease; }
   .god-sil.god-revealed { opacity: .07 !important; filter: blur(28px); }
 
-  /* ── Corner brackets ── */
+  /* corner brackets */
   .bracket-tl { position:absolute; top:-9px;    left:-9px;  width:15px; height:15px; border-top:1.5px solid; border-left:1.5px solid; }
   .bracket-tr { position:absolute; top:-9px;    right:-9px; width:15px; height:15px; border-top:1.5px solid; border-right:1.5px solid; }
   .bracket-bl { position:absolute; bottom:-9px; left:-9px;  width:15px; height:15px; border-bottom:1.5px solid; border-left:1.5px solid; }
   .bracket-br { position:absolute; bottom:-9px; right:-9px; width:15px; height:15px; border-bottom:1.5px solid; border-right:1.5px solid; }
 
-  /* ── Grain ── */
+  /* grain */
   .grain::before {
     content:''; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.022;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
     background-size: 200px;
   }
 
-  /* ── Lights button ── */
+  /* lights button */
   .lights-btn {
     position: absolute; bottom: 1rem; right: 1rem; z-index: 10;
     border-radius: 2px; padding: .42rem .85rem;
@@ -270,9 +264,7 @@ const GLOBAL_STYLES = `
   .lights-dot { width: 7px; height: 7px; border-radius: 50%; transition: background 0.42s ease, box-shadow 0.42s ease; }
 `;
 
-// ─────────────────────────────────────────────────────────────────────────────
 // CUSTOM CURSOR
-// ─────────────────────────────────────────────────────────────────────────────
 function XenovaCursor() {
   const dotRef = useRef(null);
   const ringRef = useRef(null);
@@ -337,9 +329,7 @@ function XenovaCursor() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // NEBULA BACKGROUND
-// ─────────────────────────────────────────────────────────────────────────────
 function NebulaBackground() {
   const cvs = useRef(null);
   useEffect(() => {
@@ -386,9 +376,7 @@ function NebulaBackground() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // GLITCH REVEAL  — scroll-triggered, one-shot
-// ─────────────────────────────────────────────────────────────────────────────
 function GlitchReveal({ children, delay = 0, style = {} }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, amount: 0.2 });
@@ -407,9 +395,7 @@ function GlitchReveal({ children, delay = 0, style = {} }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // 3D RELIC VIEWER
-// ─────────────────────────────────────────────────────────────────────────────
 function RelicModel({ url, scale }) {
   const { scene } = useGLTF(url);
   return <Center><Clone object={scene} scale={scale || 1.5} /></Center>;
@@ -446,9 +432,7 @@ function RelicViewer({ modelPath, accentColor, scale, stageLights }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // LIGHTBOX
-// ─────────────────────────────────────────────────────────────────────────────
 function ArtifactLightbox({ artifact, onClose }) {
   const ac = artifact.accentColor;
 
@@ -544,9 +528,7 @@ function ArtifactLightbox({ artifact, onClose }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // IMAGE SHAPE MAP
-// ─────────────────────────────────────────────────────────────────────────────
 const IMAGE_SHAPE = {
   square: { aspectRatio: '1/1', borderRadius: '3px' },
   tall: { aspectRatio: '2/5', borderRadius: '2px', maxHeight: '480px' },
@@ -562,9 +544,7 @@ const SHAPE_RATIO = {
   hex: '1/1', circle: '1/1', landscape: '3/2', panoramic: '21/9',
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
 // LIGHTS BUTTON
-// ─────────────────────────────────────────────────────────────────────────────
 function LightsButton({ lightsOn, onToggle, ac }) {
   return (
     <motion.button
@@ -590,9 +570,7 @@ function LightsButton({ lightsOn, onToggle, ac }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // TIMELINE CONNECTOR  — draws itself on scroll entry
-// ─────────────────────────────────────────────────────────────────────────────
 function TimelineConnector({ color }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, amount: 0.5 });
@@ -608,9 +586,7 @@ function TimelineConnector({ color }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // ARTIFACT CARD  — entry animation + parallax + 3D tilt
-// ─────────────────────────────────────────────────────────────────────────────
 function ArtifactCard({ artifact, idx, onOpen }) {
   const wrapRef = useRef(null);
   const mediaRef = useRef(null);
@@ -645,7 +621,7 @@ function ArtifactCard({ artifact, idx, onOpen }) {
   const rawTextY = useTransform(scrollYProgress, [0, 1], [18, -18]);
   const textY = useSpring(rawTextY, { stiffness: 38, damping: 18 });
 
-  // ── Entry animation directions (alternate by alignment) ──
+  // entry animation directions (alternate by alignment)
   const mediaInitX = noMotion ? 0 : (isLeft ? -55 : 55);
   const textInitX = noMotion ? 0 : (isLeft ? 38 : -38);
   const baseDelay = idx * 0.03;
@@ -670,7 +646,7 @@ function ArtifactCard({ artifact, idx, onOpen }) {
         transition={{ duration: 0.45, delay: baseDelay }}
         style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(2rem,5vw,5rem)', alignItems: 'center' }}
       >
-        {/* ── MEDIA column ── */}
+        {/* media column */}
         <motion.div
           ref={mediaRef}
           data-artifact
@@ -738,7 +714,7 @@ function ArtifactCard({ artifact, idx, onOpen }) {
           )}
         </motion.div>
 
-        {/* ── TEXT column ── */}
+        {/* text column */}
         <motion.div
           initial={{ opacity: 0, x: textInitX, y: 22 }}
           animate={inView ? { opacity: 1, x: 0, y: 0 } : {}}
@@ -807,9 +783,7 @@ function ArtifactCard({ artifact, idx, onOpen }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // HERO
-// ─────────────────────────────────────────────────────────────────────────────
 function HeroSection() {
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
@@ -894,9 +868,7 @@ function HeroSection() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // DATA TICKER
-// ─────────────────────────────────────────────────────────────────────────────
 const TICKER_STR = [
   'XENOVA LIQUID RESERVES: DEPLETED', 'GOD STATUS: DORMANT · CALCULATING',
   'PLANET XENOVA — ATMOSPHERIC SILENCE', '14 TERRAFORMED WORLDS RECLAIMED',
@@ -914,9 +886,7 @@ function DataTicker() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // ROOT PAGE
-// ─────────────────────────────────────────────────────────────────────────────
 export default function ArtifactsVault() {
   const [selected, setSelected] = useState(null);
   const [godVisible, setGodVisible] = useState(false);
@@ -929,7 +899,7 @@ export default function ArtifactsVault() {
   const handleOpenArtifact = useCallback((a) => { setSelected(a); addViewedRelic(a.id); }, [addViewedRelic]);
   const handleCloseArtifact = useCallback(() => setSelected(null), []);
 
-  // ── Audio ──
+  // audio
   useEffect(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio('/audio/ambient-relics.mp3');
@@ -944,7 +914,7 @@ export default function ArtifactsVault() {
     return () => { audioRef.current?.pause(); };
   }, [audioOn]);
 
-  // ── Global CSS ──
+  // global css
   useEffect(() => {
     const id = 'xenova-global';
     if (!document.getElementById(id)) {
@@ -955,7 +925,7 @@ export default function ArtifactsVault() {
     return () => { document.getElementById(id)?.remove(); };
   }, []);
 
-  // ── Locomotive Scroll ──
+  // locomotive scroll
   useEffect(() => {
     let cancelled = false;
     (async () => {

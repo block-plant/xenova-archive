@@ -3,7 +3,7 @@ import { useVisitor } from '../context/VisitorContext';
 import { PLANETS as PLANET_DATA } from '../data/planetData';
 import { artifacts as ARTIFACTS_DATA } from '../data/artifacts';
 
-// ─── Injected CSS ──────────────────────────────────────────────────────────────
+// injected css
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
@@ -55,7 +55,7 @@ const STYLES = `
     to   { width: 100%; }
   }
 
-  /* ── Root shell ── */
+  /* root shell */
   .xnv-shell {
     position: relative;
     width: 100%;
@@ -114,7 +114,7 @@ const STYLES = `
     z-index: 22;
   }
 
-  /* ── Header ── */
+  /* header */
   .xnv-header {
     position: relative;
     z-index: 30;
@@ -163,7 +163,7 @@ const STYLES = `
     color: #00FFD1;
   }
 
-  /* ── ASCII logo ── */
+  /* ascii logo */
   .xnv-logo {
     position: relative;
     z-index: 30;
@@ -176,7 +176,7 @@ const STYLES = `
     padding: 8px 32px 2px;
   }
 
-  /* ── Output scroll area ── */
+  /* output scroll area */
   .xnv-output {
     position: relative;
     z-index: 30;
@@ -198,7 +198,7 @@ const STYLES = `
   .xnv-output::-webkit-scrollbar-thumb { background: rgba(0,255,209,0.18); border-radius: 2px; }
   .xnv-output::-webkit-scrollbar-track { background: transparent; }
 
-  /* ── Line types ── */
+  /* line types */
   .xnv-line {
     white-space: pre-wrap;
     word-break: break-word;
@@ -240,7 +240,7 @@ const STYLES = `
   }
   .xnv-bar-pct { color: #00FFD1; font-size: 0.82rem; min-width: 38px; text-align: right; }
 
-  /* ── Input row ── */
+  /* input row */
   .xnv-input-row {
     position: relative;
     z-index: 30;
@@ -290,7 +290,7 @@ const STYLES = `
     animation: xnv-blink 1s step-end infinite;
   }
 
-  /* ── Judge bypass button ── */
+  /* judge bypass button */
   .xnv-bypass-btn {
     position: relative;
     z-index: 30;
@@ -328,7 +328,7 @@ const STYLES = `
     flex-shrink: 0;
   }
 
-  /* ── Glitch overlay ── */
+  /* glitch overlay */
   .xnv-glitch .xnv-output,
   .xnv-glitch .xnv-header {
     animation: xnv-glitch-rgb 0.11s steps(2) infinite !important;
@@ -342,7 +342,7 @@ const STYLES = `
     z-index: 35;
   }
 
-  /* ── Bypass activated state ── */
+  /* bypass activated state */
   .xnv-bypass-active {
     color: rgba(0,255,209,0.4) !important;
     border-color: rgba(0,255,209,0.15) !important;
@@ -356,7 +356,7 @@ const STYLES = `
   }
 `;
 
-// ─── Lore data (synced with actual data files) ────────────────────────────────
+// lore data (synced with actual data files)
 
 // Planet IDs used by VisitorContext (KetharaMap stores 1-14 as numbers)
 const TERMINAL_PLANETS = PLANET_DATA.map((p, i) => ({
@@ -383,7 +383,7 @@ const CODEX_TITLES = [
   'BIOSYNTHETIC HEART', 'CASCADE EMITTER', 'THE GENESIS ENGINE', 'THE LAST BREATH',
 ];
 
-// ─── Question bank (adaptive) ──────────────────────────────────────────────────
+// question bank (adaptive)
 
 // Static tier-1 pool — always available
 const TIER1_QUESTIONS = [
@@ -491,7 +491,7 @@ function buildPool(visitedPlanets, viewedRelics, decodedCodexEntries) {
   return [...base, ...planetQs, ...relicQs, ...codexQs];
 }
 
-// ─── Static content ────────────────────────────────────────────────────────────
+// static content
 const ASCII_LOGO = `\
  ██╗  ██╗███████╗███╗   ██╗ ██████╗ ██╗   ██╗ █████╗
  ╚██╗██╔╝██╔════╝████╗  ██║██╔═══██╗██║   ██║██╔══██╗
@@ -501,7 +501,7 @@ const ASCII_LOGO = `\
  ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝ ╚═════╝   ╚═══╝  ╚═╝  ╚═╝
                   C . O . R . E .  T E R M I N A L  v3.0`;
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
+// helpers
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -540,7 +540,7 @@ function fmtElapsed(ms) {
 
 function getCheckmark(has) { return has ? '✔' : '✘'; }
 
-// ─── Component ─────────────────────────────────────────────────────────────────
+// component
 export default function Terminal() {
   const {
     hasPass,
@@ -551,7 +551,7 @@ export default function Terminal() {
     bypassForJudge,
   } = useVisitor?.() ?? {};
 
-  // ── Derived passport data ────────────────────────────────────────────────
+  // derived passport data
   const vPlanets = visitedPlanets instanceof Set ? visitedPlanets : new Set();
   const vRelics = viewedRelics instanceof Set ? viewedRelics : new Set();
   const vCodex = decodedCodexEntries instanceof Set ? decodedCodexEntries : new Set();
@@ -566,7 +566,7 @@ export default function Terminal() {
       pct >= 40 ? 'FIELD OPERATIVE' :
         'INITIATE';
 
-  // ── State ────────────────────────────────────────────────────────────────
+  // state
   const [lines, setLines] = useState([]);
   const [barLines, setBarLines] = useState([]);   // progress bar sub-lines
   const [inputVal, setInputVal] = useState('');
@@ -587,7 +587,7 @@ export default function Terminal() {
   const abortRef = useRef(false);
   const timersRef = useRef([]);
 
-  // ── Inject styles once ───────────────────────────────────────────────────
+  // inject styles once
   useEffect(() => {
     const id = 'xnv-styles-v3';
     if (!document.getElementById(id)) {
@@ -605,13 +605,13 @@ export default function Terminal() {
     if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [lines, generating, barLines]);
 
-  // ── Safe setTimeout ──────────────────────────────────────────────────────
+  // safe settimeout
   const wait = useCallback(ms => new Promise(res => {
     const t = setTimeout(res, ms);
     timersRef.current.push(t);
   }), []);
 
-  // ── Typewriter ───────────────────────────────────────────────────────────
+  // typewriter
   const typeLines = useCallback((defs, charDelay = 14) =>
     new Promise(resolve => {
       let li = 0;
@@ -642,13 +642,13 @@ export default function Terminal() {
     setLines(prev => [...prev, { id, text, cls }]);
   }, []);
 
-  // ── Cleanup on unmount ───────────────────────────────────────────────────
+  // cleanup on unmount
   useEffect(() => () => {
     abortRef.current = true;
     timersRef.current.forEach(clearTimeout);
   }, []);
 
-  // ── Boot sequence ────────────────────────────────────────────────────────
+  // boot sequence
   useEffect(() => {
     abortRef.current = false;
     async function boot() {
@@ -706,13 +706,13 @@ export default function Terminal() {
     boot();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Glitch ───────────────────────────────────────────────────────────────
+  // glitch
   const triggerGlitch = useCallback(() => {
     setGlitch(true);
     setTimeout(() => setGlitch(false), 520);
   }, []);
 
-  // ── Start evaluation ─────────────────────────────────────────────────────
+  // start evaluation
   const startEvaluation = useCallback(async () => {
     const pool = shuffle(buildPool(vPlanets, vRelics, vCodex));
     const selected = pool.slice(0, Math.min(6, pool.length));
@@ -751,7 +751,7 @@ export default function Terminal() {
     ], 11);
   }, [vPlanets, vRelics, vCodex, rank, typeLines, wait]);
 
-  // ── Commands ──────────────────────────────────────────────────────────────
+  // commands
   const runCommand = useCallback(async (raw) => {
     pushLine(`root@xenova:~/archive$ ${raw}`, 'xnv-user');
     const cmd = raw.trim().toLowerCase();
@@ -931,7 +931,7 @@ export default function Terminal() {
   }, [quizActive, pct, rank, visitorName, vPlanets, vRelics, vCodex,
     pushLine, typeLines, triggerGlitch, startEvaluation]); // eslint-disable-line
 
-  // ── Skip question ─────────────────────────────────────────────────────────
+  // skip question
   const handleSkip = useCallback(async () => {
     pushLine('> skip', 'xnv-user');
     await typeLines([
@@ -956,7 +956,7 @@ export default function Terminal() {
     }
   }, [quizQueue, quizScore, pushLine, typeLines]); // eslint-disable-line
 
-  // ── Evaluation complete ───────────────────────────────────────────────────
+  // evaluation complete
   const showEvalComplete = useCallback(async (correct, total) => {
     const score = total > 0 ? Math.round((correct / total) * 100) : 0;
     const verdict =
@@ -975,7 +975,7 @@ export default function Terminal() {
     ], 12);
   }, [typeLines]);
 
-  // ── Quiz answer handler ───────────────────────────────────────────────────
+  // quiz answer handler
   const handleAnswer = useCallback(async (input) => {
     pushLine(`> ${input}`, 'xnv-user');
     const correct = fuzzyMatch(input, currentQ.answers);
@@ -1014,7 +1014,7 @@ export default function Terminal() {
     }
   }, [currentQ, quizQueue, quizScore, pushLine, typeLines, triggerGlitch, showEvalComplete]);
 
-  // ── Submit ────────────────────────────────────────────────────────────────
+  // submit
   const handleSubmit = useCallback(async e => {
     e.preventDefault();
     const raw = inputVal.trim();
@@ -1026,7 +1026,7 @@ export default function Terminal() {
     inputRef.current?.focus();
   }, [inputVal, frozen, generating, quizActive, handleAnswer, handleSkip, runCommand]);
 
-  // ── Judge bypass ──────────────────────────────────────────────────────────
+  // judge bypass
   const handleBypass = useCallback(async () => {
     if (bypassDone) return;
     if (bypassForJudge) bypassForJudge();
@@ -1064,14 +1064,14 @@ export default function Terminal() {
     setTimeout(() => inputRef.current?.focus(), 80);
   }, [bypassDone, bypassForJudge, wait, typeLines]);
 
-  // ── Prompt label ──────────────────────────────────────────────────────────
+  // prompt label
   const promptLabel =
     frozen && !booted ? 'BOOTING...' :
       !hasPass && !bypassDone ? 'ACCESS DENIED' :
         quizActive ? '[EVAL]$' :
           'root@xenova:~/archive$';
 
-  // ─── Render ────────────────────────────────────────────────────────────────
+  // render
   return (
     <div
       className={`xnv-shell${glitch ? ' xnv-glitch' : ''}`}
@@ -1083,7 +1083,7 @@ export default function Terminal() {
       {/* Glitch overlay */}
       {glitch && <div className="xnv-glitch-overlay" aria-hidden="true" />}
 
-      {/* ── Header ── */}
+      {/* header */}
       <div className="xnv-header">
         <div className="xnv-header-left">
           <div className="xnv-title">C.O.R.E. TERMINAL</div>
@@ -1107,10 +1107,10 @@ export default function Terminal() {
         </div>
       </div>
 
-      {/* ── ASCII logo ── */}
+      {/* ascii logo */}
       <div className="xnv-logo" aria-hidden="true">{ASCII_LOGO}</div>
 
-      {/* ── Output area ── */}
+      {/* output area */}
       <div className="xnv-output" ref={outputRef}>
         {lines.map(line => (
           <div key={line.id} className={`xnv-line ${line.cls}`}>
@@ -1124,7 +1124,7 @@ export default function Terminal() {
         <div ref={scrollAnchorRef} style={{ height: 1 }} />
       </div>
 
-      {/* ── Input row ── */}
+      {/* input row */}
       <form
         className="xnv-input-row"
         onSubmit={handleSubmit}
@@ -1151,7 +1151,7 @@ export default function Terminal() {
         )}
       </form>
 
-      {/* ── Judge Bypass Panel ── */}
+      {/* judge bypass panel */}
       <button
         className={`xnv-bypass-btn${bypassDone ? ' xnv-bypass-active' : ''}`}
         onClick={handleBypass}

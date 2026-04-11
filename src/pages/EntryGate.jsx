@@ -12,7 +12,7 @@ import {
   signOut
 } from 'firebase/auth';
 
-// ─── STYLES ───────────────────────────────────────────────────────────────
+// styles
 const STYLES = `
   @keyframes xnv-pulse-slow {
     0%, 100% { opacity: 0.3; transform: scale(1); }
@@ -317,14 +317,13 @@ export default function EntryGate() {
     if (!hasPass) setIsRendered(true);
   }, [hasPass]);
 
-  // ── States ──
-  // welcome | signup | login | forgot | github | verify | success
+  // screen states: welcome, signup, login, forgot, github, verify, success
   const [screen, setScreen] = useState('welcome');
   const [errShake, setErrShake] = useState(false);
   const [errMsg, setErrMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Forms
+  // form data
   const [formData, setFormData] = useState({
     name: '', age: '', passportName: '',
     email: '', password: '', confirm: ''
@@ -333,7 +332,7 @@ export default function EntryGate() {
   // Portal State
   const [portalActive, setPortalActive] = useState(false);
 
-  // ── Helpers ──
+  // helpers
   const triggerError = (msg) => {
     setErrMsg(msg);
     setErrShake(true);
@@ -345,7 +344,7 @@ export default function EntryGate() {
     setErrMsg('');
   };
 
-  // ── Navigation ──
+  // navigation
   const go = (s) => {
     setScreen(s);
     setErrMsg('');
@@ -362,7 +361,7 @@ export default function EntryGate() {
     }, 2500);
   };
 
-  // ── Handlers ──
+  // handlers
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
     const { name, age, passportName, email, password, confirm } = formData;
@@ -440,7 +439,6 @@ export default function EntryGate() {
 
   if (!isRendered) return null;
 
-  // ── Layout Components ──
   const ErrorBanner = () => !!errMsg && (
     <div style={{ color: '#FF3A3A', fontSize: '0.75rem', marginBottom: '15px', textAlign: 'center', letterSpacing: '0.1em' }}>
       ⚠️ {errMsg}

@@ -42,7 +42,7 @@ function MainArchive() {
   return (
     <div className="archive-page">
 
-      {/* ── Hero Section ── */}
+      {/* hero section */}
       <section className="archive-hero" ref={heroRef}>
 
         {/* Stars */}
@@ -92,7 +92,7 @@ function MainArchive() {
 
       </section>
 
-      {/* ── Era Selection ── */}
+      {/* era selection */}
       <section className="era-section">
         <div className="era-header">
           <p className="era-label">CHRONOLOGICAL ARCHIVE</p>
@@ -124,7 +124,7 @@ function MainArchive() {
         </div>
       </section>
 
-      {/* ── Quick Access ── */}
+      {/* quick access */}
       <section className="quick-access">
         <p className="era-label">NAVIGATE THE ARCHIVE</p>
         <div className="quick-grid">

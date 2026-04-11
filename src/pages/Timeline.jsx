@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-// ─── ERA DATA ────────────────────────────────────────────────────────────────
+// era data
 const ERAS = [
   {
     id: "discovery",
@@ -157,7 +157,7 @@ const ERAS = [
   },
 ];
 
-// ─── PARTICLE CANVAS ────────────────────────────────────────────────────────
+// particle canvas
 function StarField() {
   const canvasRef = useRef(null);
   useEffect(() => {
@@ -203,7 +203,7 @@ function StarField() {
   );
 }
 
-// ─── VERTICAL LINE PULSE ────────────────────────────────────────────────────
+// vertical line pulse
 function TimelineSpine({ activeEra }) {
   return (
     <div
@@ -236,7 +236,7 @@ function TimelineSpine({ activeEra }) {
   );
 }
 
-// ─── ERA NODE ───────────────────────────────────────────────────────────────
+// era node
 function EraNode({ era, index, onSelect, isActive }) {
   const isLeft = index % 2 === 0;
   const nodeRef = useRef(null);
@@ -352,7 +352,7 @@ function EraNode({ era, index, onSelect, isActive }) {
   );
 }
 
-// ─── ERA CARD ───────────────────────────────────────────────────────────────
+// era card
 function EraCard({ era, isActive, onSelect, align }) {
   return (
     <div
@@ -447,7 +447,7 @@ function EraCard({ era, isActive, onSelect, align }) {
   );
 }
 
-// ─── EVENT DETAIL PANEL ─────────────────────────────────────────────────────
+// event detail panel
 function EventPanel({ era, onClose }) {
   const [activeEvent, setActiveEvent] = useState(0);
   const panelRef = useRef(null);
@@ -714,7 +714,7 @@ function EventPanel({ era, onClose }) {
   );
 }
 
-// ─── HEADER ─────────────────────────────────────────────────────────────────
+// header
 function Header({ navigate }) {
   return (
     <div
@@ -798,7 +798,7 @@ function Header({ navigate }) {
   );
 }
 
-// ─── LEGEND ─────────────────────────────────────────────────────────────────
+// legend
 function EraLegend({ activeEra, onSelect }) {
   return (
     <div
@@ -835,7 +835,7 @@ function EraLegend({ activeEra, onSelect }) {
   );
 }
 
-// ─── MAIN PAGE ───────────────────────────────────────────────────────────────
+// main page
 export default function Timeline() {
   const navigate = useNavigate();
   const location = useLocation();
