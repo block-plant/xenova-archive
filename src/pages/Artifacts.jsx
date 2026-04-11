@@ -137,7 +137,10 @@ const GLOBAL_STYLES = `
     --ff-body:  'Barlow Condensed', sans-serif;
   }
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; cursor: none !important; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  @media (hover: hover) and (pointer: fine) {
+    *, *::before, *::after { cursor: none !important; }
+  }
 
   /* scrollbar */
   ::-webkit-scrollbar { width: 3px; }
@@ -293,7 +296,14 @@ function XenovaCursor() {
   const [big, setBig] = useState(false);
   const [ripples, setRipples] = useState([]);
 
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
   useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
+
+  useEffect(() => {
+    if (isTouchDevice) return;
     const move = (e) => {
       pos.current = { x: e.clientX, y: e.clientY };
       if (dotRef.current) {
@@ -336,7 +346,9 @@ function XenovaCursor() {
       window.removeEventListener('mouseout', out);
       cancelAnimationFrame(raf.current);
     };
-  }, []);
+  }, [isTouchDevice]);
+
+  if (isTouchDevice) return null;
 
   return (
     <>
@@ -1020,7 +1032,7 @@ export default function ArtifactsVault() {
         </motion.div>
 
         {/* Artifact list */}
-        <div style={{ padding: '2rem 8vw 6rem', position: 'relative', zIndex: 1 }}>
+        <div style={{ padding: 'clamp(1rem,4vw,2rem) clamp(4vw,8vw,8vw) 6rem', position: 'relative', zIndex: 1 }}>
           {ARTIFACTS.map((art, i) => (
             <div key={art.id} style={{ position: 'relative' }}>
               {i < ARTIFACTS.length - 1 && <TimelineConnector color={art.accentColor} />}

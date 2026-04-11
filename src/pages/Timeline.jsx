@@ -238,9 +238,18 @@ function TimelineSpine({ activeEra }) {
 
 // era node
 function EraNode({ era, index, onSelect, isActive }) {
-  const isLeft = index % 2 === 0;
   const nodeRef = useRef(null);
   const [visible, setVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  const isLeft = index % 2 === 0;
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -251,6 +260,66 @@ function EraNode({ era, index, onSelect, isActive }) {
     return () => obs.disconnect();
   }, []);
 
+  if (isMobile) {
+    return (
+      <div
+        ref={nodeRef}
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 16,
+          marginBottom: 48,
+          opacity: visible ? 1 : 0,
+          transform: visible ? 'translateY(0)' : 'translateY(40px)',
+          transition: 'opacity 0.8s ease, transform 0.8s ease',
+          transitionDelay: `${index * 0.1}s`,
+          paddingLeft: 8,
+        }}
+      >
+        {/* Spine node */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+          <button
+            onClick={() => onSelect(era.id)}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              border: `2px solid ${era.color}`,
+              background: isActive ? era.color + '22' : '#050810',
+              color: era.color,
+              fontSize: 18,
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: isActive
+                ? `0 0 20px ${era.color}88, 0 0 40px ${era.color}44`
+                : `0 0 8px ${era.color}33`,
+              zIndex: 2,
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {era.icon}
+          </button>
+          <div
+            style={{
+              width: 2,
+              flex: 1,
+              minHeight: 40,
+              background: `linear-gradient(to bottom, ${era.color}66, transparent)`,
+            }}
+          />
+        </div>
+        {/* Card */}
+        <div style={{ flex: 1, paddingTop: 8 }}>
+          <EraCard era={era} isActive={isActive} onSelect={onSelect} align="left" />
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop: original 3-column layout
   return (
     <div
       ref={nodeRef}
@@ -451,6 +520,14 @@ function EraCard({ era, isActive, onSelect, align }) {
 function EventPanel({ era, onClose }) {
   const [activeEvent, setActiveEvent] = useState(0);
   const panelRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     setActiveEvent(0);
@@ -479,28 +556,44 @@ function EventPanel({ era, onClose }) {
     DEFAULT: "#7AAFC4",
   };
 
-  return (
-    <div
-      ref={panelRef}
-      style={{
+  // Mobile: bottom sheet. Desktop: right side panel.
+  const panelStyle = isMobile
+    ? {
+        position: "fixed",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        maxHeight: '80vh',
+        background: "linear-gradient(0deg, #060a14 0%, #050810 100%)",
+        borderTop: `1px solid ${era.color}44`,
+        zIndex: 200,
+        overflowY: "auto",
+        scrollbarWidth: "none",
+        animation: "panel-slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+      }
+    : {
         position: "fixed",
         right: 0,
         top: 0,
         bottom: 0,
         width: 420,
-        background:
-          "linear-gradient(180deg, #060a14 0%, #050810 100%)",
+        background: "linear-gradient(180deg, #060a14 0%, #050810 100%)",
         borderLeft: `1px solid ${era.color}44`,
         zIndex: 200,
         overflowY: "auto",
         scrollbarWidth: "none",
         animation: "panel-slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-      }}
+      };
+
+  return (
+    <div
+      ref={panelRef}
+      style={panelStyle}
     >
       {/* Header */}
       <div
         style={{
-          padding: "32px 28px 20px",
+          padding: isMobile ? "20px 20px 14px" : "32px 28px 20px",
           borderBottom: `1px solid ${era.color}22`,
           position: "sticky",
           top: 0,
@@ -512,8 +605,8 @@ function EventPanel({ era, onClose }) {
           onClick={onClose}
           style={{
             position: "absolute",
-            top: 20,
-            right: 20,
+            top: 16,
+            right: 16,
             background: "none",
             border: `1px solid #7AAFC444`,
             color: "#7AAFC4",
@@ -714,6 +807,7 @@ function EventPanel({ era, onClose }) {
   );
 }
 
+
 // header
 function Header({ navigate }) {
   return (
@@ -800,6 +894,16 @@ function Header({ navigate }) {
 
 // legend
 function EraLegend({ activeEra, onSelect }) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  if (isMobile) return null;
+
   return (
     <div
       style={{
@@ -894,6 +998,10 @@ export default function Timeline() {
           from { transform: translateX(100%); opacity: 0; }
           to { transform: translateX(0); opacity: 1; }
         }
+        @keyframes panel-slide-up {
+          from { transform: translateY(100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
         @keyframes glow-pulse {
           0%, 100% { opacity: 0.4; }
           50% { opacity: 1; }
@@ -901,6 +1009,14 @@ export default function Timeline() {
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #050810; }
         ::-webkit-scrollbar-thumb { background: #00FFD133; border-radius: 2px; }
+        
+        /* Timeline mobile: single column layout */
+        @media (max-width: 767px) {
+          .timeline-hero-stats {
+            flex-direction: column !important;
+            gap: 16px !important;
+          }
+        }
       `}</style>
 
       <StarField />
@@ -988,10 +1104,13 @@ export default function Timeline() {
           shape of a question no one survived to answer.
         </div>
         <div
+          className="timeline-hero-stats"
           style={{
             marginTop: 40,
             display: "flex",
-            gap: 40,
+            gap: 24,
+            flexWrap: "wrap",
+            justifyContent: "center",
             fontFamily: "'Courier New', monospace",
             fontSize: 10,
             letterSpacing: 3,
