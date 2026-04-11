@@ -262,6 +262,24 @@ const GLOBAL_STYLES = `
       box-shadow   0.42s cubic-bezier(0.16,1,0.3,1);
   }
   .lights-dot { width: 7px; height: 7px; border-radius: 50%; transition: background 0.42s ease, box-shadow 0.42s ease; }
+
+  /* responsive grids */
+  .artifact-grid {
+    display: grid; grid-template-columns: 1fr; gap: clamp(2rem,5vw,5rem); align-items: center;
+  }
+  @media (min-width: 768px) {
+    .artifact-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 767px) {
+    .mobile-media-col { order: 0 !important; }
+    .mobile-text-col { order: 1 !important; }
+  }
+
+  .lightbox-grid { display: grid; grid-template-columns: 1fr; max-height: 90vh; overflow-y: auto;}
+  @media (min-width: 768px) {
+    .lightbox-grid { grid-template-columns: 1fr 1fr; overflow-y: hidden; }
+  }
 `;
 
 // CUSTOM CURSOR
@@ -461,14 +479,13 @@ function ArtifactLightbox({ artifact, onClose }) {
         exit={{ scale: 0.85, y: 50, opacity: 0 }}
         transition={SPR_MEDIUM}
         onClick={e => e.stopPropagation()}
-        className="scanlines"
+        className="scanlines lightbox-grid"
         style={{
-          maxWidth: '960px', width: '100%', maxHeight: '90vh',
-          display: 'grid', gridTemplateColumns: '1fr 1fr',
+          maxWidth: '960px', width: '100%',
           background: 'linear-gradient(135deg,rgba(8,10,18,.99) 0%,rgba(4,8,16,.99) 100%)',
           border: `1px solid ${ac}26`,
           boxShadow: `0 0 120px ${ac}15, 0 0 300px ${ac}05, inset 0 1px 0 ${ac}11`,
-          overflow: 'hidden', position: 'relative',
+          position: 'relative',
         }}
       >
         {/* Media panel */}
@@ -641,10 +658,10 @@ function ArtifactCard({ artifact, idx, onOpen }) {
   return (
     <div ref={wrapRef} style={{ marginBottom: 'clamp(4.5rem,9vw,8rem)' }}>
       <motion.div
+        className="artifact-grid"
         initial={{ opacity: 0 }}
         animate={inView ? { opacity: 1 } : {}}
         transition={{ duration: 0.45, delay: baseDelay }}
-        style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(2rem,5vw,5rem)', alignItems: 'center' }}
       >
         {/* media column */}
         <motion.div
@@ -652,7 +669,7 @@ function ArtifactCard({ artifact, idx, onOpen }) {
           data-artifact
           onMouseMove={onMove}
           onMouseLeave={onLeave}
-          className={`${hasModel ? '' : 'art-float'} art-glow`}
+          className={`mobile-media-col ${hasModel ? '' : 'art-float'} art-glow`}
           initial={{ opacity: 0, x: mediaInitX, y: 28 }}
           animate={inView ? { opacity: 1, x: 0, y: 0 } : {}}
           transition={{ ...SPR_SOFT, delay: baseDelay }}
@@ -716,6 +733,7 @@ function ArtifactCard({ artifact, idx, onOpen }) {
 
         {/* text column */}
         <motion.div
+          className="mobile-text-col"
           initial={{ opacity: 0, x: textInitX, y: 22 }}
           animate={inView ? { opacity: 1, x: 0, y: 0 } : {}}
           transition={{ ...SPR_SOFT, delay: baseDelay + 0.1 }}

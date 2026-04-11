@@ -1,14 +1,11 @@
 import React, { useState } from 'react'
 import SolarSystemScene from '../components/KetharaMap/SolarSystemScene'
-import NavBar from '../components/NavBar'
 
 export default function KetharaApp() {
   const [selectedPlanet, setSelectedPlanet] = useState(null)
 
   return (
     <div className="page-container" style={{ overflow: 'hidden', padding: 0 }}>
-      <NavBar />
-      
       {/* Target Canvas Scene */}
       <SolarSystemScene 
         selectedPlanetId={selectedPlanet} 

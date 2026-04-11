@@ -59,7 +59,7 @@ const STYLES = `
   .xnv-shell {
     position: relative;
     width: 100%;
-    height: calc(100vh - var(--navbar-height, 64px));
+    height: calc(100dvh - var(--navbar-height, 64px));
     margin-top: var(--navbar-height, 64px);
     background: linear-gradient(180deg, #030507 0%, #020406 100%);
     color: #00FFD1;
@@ -122,10 +122,13 @@ const STYLES = `
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    padding: 16px 32px 14px;
+    padding: 16px 16px 14px;
     border-bottom: 1px solid rgba(0,255,209,0.12);
     background: linear-gradient(180deg, rgba(0,255,209,0.03) 0%, transparent 100%);
     animation: xnv-flicker 6s infinite alternate;
+  }
+  @media (min-width: 768px) {
+    .xnv-header { padding: 16px 32px 14px; }
   }
   .xnv-header-left { display: flex; flex-direction: column; gap: 3px; }
   .xnv-title {
@@ -168,12 +171,15 @@ const STYLES = `
     position: relative;
     z-index: 30;
     flex-shrink: 0;
-    font-size: 0.525rem;
+    font-size: clamp(0.35rem, 1.2vw, 0.525rem);
     line-height: 1.15;
     white-space: pre;
     color: rgba(0,255,209,0.35);
     text-shadow: 0 0 6px rgba(0,255,209,0.2);
-    padding: 8px 32px 2px;
+    padding: 8px 16px 2px;
+  }
+  @media (min-width: 768px) {
+    .xnv-logo { padding: 8px 32px 2px; }
   }
 
   /* output scroll area */
@@ -183,7 +189,7 @@ const STYLES = `
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 16px 36px 12px;
+    padding: 16px 16px 12px;
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -193,6 +199,9 @@ const STYLES = `
     scroll-behavior: smooth;
     scrollbar-width: thin;
     scrollbar-color: rgba(0,255,209,0.18) transparent;
+  }
+  @media (min-width: 768px) {
+    .xnv-output { padding: 16px 36px 12px; }
   }
   .xnv-output::-webkit-scrollbar       { width: 4px; }
   .xnv-output::-webkit-scrollbar-thumb { background: rgba(0,255,209,0.18); border-radius: 2px; }
@@ -248,9 +257,12 @@ const STYLES = `
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 36px 12px;
+    padding: 10px 16px 12px;
     border-top: 1px solid rgba(0,255,209,0.1);
     background: linear-gradient(0deg, rgba(0,255,209,0.02) 0%, transparent 100%);
+  }
+  @media (min-width: 768px) {
+    .xnv-input-row { padding: 10px 36px 12px; }
   }
   .xnv-prompt {
     color: #A0E8D8;

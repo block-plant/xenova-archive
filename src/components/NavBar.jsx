@@ -17,9 +17,32 @@ function NavBar() {
   const navigate = useNavigate()
   const { logout } = useVisitor()
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   // Hide on gate page
   if (location.pathname === '/') return null
+
+  // Styles for the mobile menu
+  const mobileMenuStyle = {
+    position: 'absolute',
+    top: 'var(--navbar-height)',
+    left: 0,
+    right: 0,
+    background: 'rgba(5, 8, 16, 0.95)',
+    backdropFilter: 'blur(12px)',
+    borderBottom: '1px solid rgba(0, 255, 209, 0.1)',
+    display: isMobileMenuOpen ? 'flex' : 'none',
+    flexDirection: 'column',
+    padding: '1rem 1.5rem',
+    gap: '1rem',
+    zIndex: 9999
+  }
+
+  // Handle route change for mobile menu
+  const handleNavClick = (path) => {
+    setIsMobileMenuOpen(false);
+    navigate(path);
+  }
 
   return (
     <nav className="navbar">
@@ -64,8 +87,40 @@ function NavBar() {
         ))}
       </div>
 
+      {/* Hamburger Toggle (visible on mobile only, via inline media query simulation or class) */}
+      <button 
+        className="mobile-menu-btn lg:hidden"
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        style={{
+          background: 'transparent', border: 'none', color: 'var(--bioluminescent-teal)',
+          fontSize: '1.5rem', cursor: 'pointer', zIndex: 10001
+        }}
+      >
+        {isMobileMenuOpen ? '✕' : '☰'}
+      </button>
+
+      {/* Mobile Menu Dropdown */}
+      <div style={mobileMenuStyle} className="lg:hidden">
+        {navLinks.map(link => (
+          <button
+            key={link.path}
+            onClick={() => handleNavClick(link.path)}
+            className={`nav-link ${location.pathname === link.path ? 'nav-link-active' : ''}`}
+            style={{ textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.5rem 0', fontFamily: 'inherit' }}
+          >
+            {link.label}
+          </button>
+        ))}
+        <div style={{ height: '1px', background: 'rgba(0, 255, 209, 0.1)', margin: '0.5rem 0' }} />
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.65rem', color: 'var(--muted-cyan)' }}>
+            <span className="status-dot" /> ONLINE
+          </div>
+        </div>
+      </div>
+
       {/* Status indicator & Logout */}
-      <div className="nav-status" style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+      <div className="nav-status hidden lg:flex" style={{ gap: '1.5rem', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span className="status-dot" />
           <span>ONLINE</span>

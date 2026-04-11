@@ -53,8 +53,10 @@ const STYLES = `
   }
   .xnv-bg-ring {
     position: absolute;
-    width: 800px;
-    height: 800px;
+    width: 150vw;
+    height: 150vw;
+    max-width: 800px;
+    max-height: 800px;
     border-radius: 50%;
     border: 1px solid rgba(0, 255, 209, 0.05);
     background: radial-gradient(circle, rgba(0,255,209,0.03) 0%, transparent 70%);
@@ -74,8 +76,9 @@ const STYLES = `
   .xnv-panel {
     position: relative;
     z-index: 10;
-    width: 480px;
-    padding: 40px;
+    width: 90%;
+    max-width: 480px;
+    padding: clamp(20px, 5vw, 40px);
     background: linear-gradient(135deg, rgba(8,15,26,0.85), rgba(5,8,16,0.95));
     border: 1px solid rgba(0, 255, 209, 0.3);
     box-shadow: 0 0 40px rgba(0,255,209,0.1), inset 0 0 20px rgba(0,255,209,0.05);
@@ -91,7 +94,7 @@ const STYLES = `
     margin-bottom: 30px;
   }
   .xnv-title {
-    font-size: 1.5rem;
+    font-size: clamp(1.2rem, 4vw, 1.5rem);
     font-weight: bold;
     color: #00FFD1;
     letter-spacing: 0.3em;
@@ -497,7 +500,7 @@ export default function EntryGate() {
                 <div className="xnv-subtitle">STEP 1: PROFILE GENERATION</div>
               </div>
               <ErrorBanner />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
                 <div className="xnv-input-group">
                   <span className="xnv-label">FULL NAME</span>
                   <input className="xnv-input" type="text" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} value={formData.name} onChange={e => handleInputChange('name', e.target.value)} />
@@ -515,7 +518,7 @@ export default function EntryGate() {
                 <span className="xnv-label">COMMS CHANNEL (EMAIL)</span>
                 <input className="xnv-input" type="email" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} value={formData.email} onChange={e => handleInputChange('email', e.target.value)} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
                 <div className="xnv-input-group">
                   <span className="xnv-label">CYPHER (PASSWORD)</span>
                   <input className="xnv-input" type="password" autoComplete="new-password" value={formData.password} onChange={e => handleInputChange('password', e.target.value)} />

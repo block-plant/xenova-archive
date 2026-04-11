@@ -55,7 +55,7 @@ function MainArchive() {
         <ArchivePlanet />
 
         {/* Hero content — left aligned to make room for planet */}
-        <div className="hero-content" style={{ marginRight: 'auto', marginLeft: '6rem', textAlign: 'left' }}>
+        <div className="hero-content">
           <p className="hero-label">14 STAR SYSTEMS · ENDLESS ENERGY · A TRAPPED GOD</p>
 
           <h1 className="hero-title">
