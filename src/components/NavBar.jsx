@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useVisitor } from '../context/VisitorContext'
 
 const navLinks = [
   { label: 'ARCHIVE',    path: '/archive' },
@@ -12,6 +13,7 @@ const navLinks = [
 function NavBar() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { logout } = useVisitor()
 
   // Hide on gate page
   if (location.pathname === '/') return null
@@ -59,10 +61,33 @@ function NavBar() {
         ))}
       </div>
 
-      {/* Status indicator */}
-      <div className="nav-status">
-        <span className="status-dot" />
-        <span>ONLINE</span>
+      {/* Status indicator & Logout */}
+      <div className="nav-status" style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="status-dot" />
+          <span>ONLINE</span>
+        </div>
+        <button 
+          onClick={() => {
+            logout();
+            navigate('/');
+          }}
+          className="nav-link"
+          style={{ 
+            background: 'transparent', 
+            border: '1px solid rgba(255, 58, 58, 0.3)', 
+            color: 'rgba(255, 58, 58, 0.8)',
+            cursor: 'pointer', 
+            fontFamily: 'inherit',
+            fontSize: '0.7rem',
+            padding: '4px 8px',
+            letterSpacing: '0.1em'
+          }}
+          onMouseEnter={(e) => { e.target.style.background = 'rgba(255, 58, 58, 0.1)'; e.target.style.color = '#FF3A3A'; e.target.style.borderColor = '#FF3A3A'; }}
+          onMouseLeave={(e) => { e.target.style.background = 'transparent'; e.target.style.color = 'rgba(255, 58, 58, 0.8)'; e.target.style.borderColor = 'rgba(255, 58, 58, 0.3)'; }}
+        >
+          DISCONNECT
+        </button>
       </div>
 
     </nav>

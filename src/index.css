@@ -10,6 +10,8 @@
   --pale-starlight: #E8F4F8;
   --muted-cyan: #7AAFC4;
   --xenova-green: #39FF14;
+  /* Navbar height — referenced by pages that need to offset below the fixed bar */
+  --navbar-height: 64px;
 }
 
 /* ── Base Reset ── */
@@ -17,6 +19,16 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -webkit-user-drag: none;
+}
+
+input, textarea {
+  user-select: auto;
+  -webkit-user-select: auto;
+  -moz-user-select: auto;
 }
 
 html {
@@ -277,14 +289,16 @@ input, textarea {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 100;
+  height: var(--navbar-height);
+  z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.2rem 3rem;
+  padding: 0 3rem;
   background: rgba(5, 8, 16, 0.8);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(0, 255, 209, 0.1);
+  box-sizing: border-box;
 }
 
 .nav-logo {
