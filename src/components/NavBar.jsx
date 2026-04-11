@@ -1,5 +1,7 @@
+import React, { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useVisitor } from '../context/VisitorContext'
+import FeedbackModal from './FeedbackModal'
 
 const navLinks = [
   { label: 'ARCHIVE',    path: '/archive' },
@@ -14,6 +16,7 @@ function NavBar() {
   const location = useLocation()
   const navigate = useNavigate()
   const { logout } = useVisitor()
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
 
   // Hide on gate page
   if (location.pathname === '/') return null
@@ -68,6 +71,25 @@ function NavBar() {
           <span>ONLINE</span>
         </div>
         <button 
+          onClick={() => setIsFeedbackOpen(true)}
+          className="nav-link"
+          style={{ 
+            background: 'transparent', 
+            border: '1px solid rgba(255, 179, 71, 0.3)', 
+            color: 'rgba(255, 179, 71, 0.8)',
+            cursor: 'pointer', 
+            fontFamily: 'inherit',
+            fontSize: '0.7rem',
+            padding: '4px 8px',
+            letterSpacing: '0.1em'
+          }}
+          onMouseEnter={(e) => { e.target.style.background = 'rgba(255, 179, 71, 0.1)'; e.target.style.color = '#FFB347'; e.target.style.borderColor = '#FFB347'; }}
+          onMouseLeave={(e) => { e.target.style.background = 'transparent'; e.target.style.color = 'rgba(255, 179, 71, 0.8)'; e.target.style.borderColor = 'rgba(255, 179, 71, 0.3)'; }}
+        >
+          REPORT ANOMALY
+        </button>
+
+        <button 
           onClick={() => {
             logout();
             navigate('/');
@@ -89,6 +111,8 @@ function NavBar() {
           DISCONNECT
         </button>
       </div>
+
+      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
 
     </nav>
   )
