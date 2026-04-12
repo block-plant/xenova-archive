@@ -70,16 +70,14 @@ input, select, textarea {
 
 /* ── Custom Tailwind Polyfills for Navbar ── */
 .hidden { display: none !important; }
-.lg\:hidden { display: none !important; }
-.lg\:flex { display: flex !important; }
 
 @media (max-width: 1023px) {
   .lg\:flex { display: none !important; }
-  .lg\:hidden { display: block !important; }
 }
 
 @media (min-width: 1024px) {
   .lg\:hidden { display: none !important; }
+  .lg\:flex { display: flex !important; }
 }
 
 /* ── Global Layout Clamp (TVs & Ultra-wide) ── */
