@@ -16,7 +16,7 @@ const ARTIFACTS = [
     id: 'seed-lattice', index: '01', name: 'The Seed Lattice',
     era: 'Pre-Civilization · 12,400 XU', classification: 'BIOLOGICAL RELIC',
     image: 'https://placehold.co/520x520/050d1a/00f5d4?text=◈',
-    model: '/models/relics/orrery.glb', modelScale: 1.5, shape: 'square', align: 'left',
+    model: '/models/relics/tree.glb', modelScale: 1.0, shape: 'tall', align: 'left',
     lore: "Discovered fossilized in Xenova-Prime's deepest crust. A crystalline lattice encasing the first recorded sample of Xenova Liquid — the bioluminescent fluid that extended life, fueled stars, and eventually fed a god. It looked harmless.",
     stats: [
       { label: 'Liquid Purity', value: '12.3%' }, { label: 'Age', value: '12,400 XU' },
@@ -425,40 +425,73 @@ function GlitchReveal({ children, delay = 0, style = {} }) {
   );
 }
 
-// 3D RELIC VIEWER
+// 3D RELIC VIEWER — lazy-mounted, only active when near viewport
 function RelicModel({ url, scale }) {
   const { scene } = useGLTF(url);
-  return <Center><Clone object={scene} scale={scale || 1.5} /></Center>;
+  // Bounds must wrap Center (not vice versa) so it can calculate camera fit correctly
+  return (
+    <Bounds fit clip observe margin={1.1}>
+      <Center>
+        <Clone object={scene} scale={scale || 1.0} />
+      </Center>
+    </Bounds>
+  );
 }
 
-function RelicViewer({ modelPath, accentColor, scale, stageLights }) {
+function RelicViewer({ modelPath, accentColor, scale, stageLights, eager = false }) {
+  const wrapRef = useRef(null);
+  const [mounted, setMounted] = useState(eager);
+
+  useEffect(() => {
+    if (eager || mounted) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setMounted(true); observer.disconnect(); } },
+      { rootMargin: '200px' }   // start loading 200px before it enters view
+    );
+    if (wrapRef.current) observer.observe(wrapRef.current);
+    return () => observer.disconnect();
+  }, [eager, mounted]);
+
   return (
-    <Canvas camera={{ position: [0, 0, 9.5], fov: 45 }} style={{ width: '100%', height: '100%', pointerEvents: 'auto' }}>
-      <ambientLight intensity={stageLights ? 0.15 : 0.35} />
-      <directionalLight position={[10, 10, 5]} intensity={stageLights ? 0.4 : 1.4} color={accentColor} />
-      <directionalLight position={[-10, -10, -5]} intensity={0.4} color="#ffffff" />
-      {stageLights && (
-        <>
-          <spotLight position={[4, 10, 5]} intensity={900} angle={0.3} penumbra={1} color={accentColor} />
-          <spotLight position={[-4, 10, 5]} intensity={900} angle={0.3} penumbra={1} color={accentColor} />
-          <spotLight position={[0, -10, 0]} intensity={160} angle={0.4} penumbra={1} color="#ffffff" />
-          <pointLight position={[0, 4, 6]} intensity={130} color={accentColor} />
-          <pointLight position={[0, -2, 4]} intensity={65} color="#ffffff" />
-          <pointLight position={[0, 0, 8]} intensity={45} color={accentColor} />
-        </>
+    <div ref={wrapRef} style={{ width: '100%', height: '100%' }}>
+      {mounted && (
+        <Canvas
+          camera={{ position: [0, 0, 9.5], fov: 38 }}
+          style={{ width: '100%', height: '100%', pointerEvents: 'auto' }}
+          gl={{ antialias: true, powerPreference: 'high-performance' }}
+          dpr={[1, 1.5]}
+          performance={{ min: 0.5 }}
+        >
+          <ambientLight intensity={stageLights ? 0.1 : 0.4} />
+          <directionalLight position={[10, 10, 5]} intensity={stageLights ? 0.3 : 1.6} color={accentColor} />
+          <directionalLight position={[-10, -10, -5]} intensity={0.3} color="#ffffff" />
+          {stageLights && (
+            <>
+              <spotLight position={[4, 10, 5]} intensity={900} angle={0.3} penumbra={1} color={accentColor} />
+              <spotLight position={[-4, 10, 5]} intensity={900} angle={0.3} penumbra={1} color={accentColor} />
+              <spotLight position={[0, -10, 0]} intensity={200} angle={0.4} penumbra={1} color="#ffffff" />
+              <pointLight position={[0, 4, 6]} intensity={180} color={accentColor} />
+              <pointLight position={[0, -2, 4]} intensity={80} color="#ffffff" />
+              <pointLight position={[0, 0, 8]} intensity={60} color={accentColor} />
+            </>
+          )}
+          <Suspense fallback={null}>
+            <RelicModel url={modelPath} scale={scale} />
+            <Environment preset="night" />
+          </Suspense>
+          <OrbitControls
+            makeDefault enableZoom={false} enablePan={false}
+            autoRotate autoRotateSpeed={stageLights ? 0.35 : 1.1}
+            enableDamping dampingFactor={0.04}
+          />
+        </Canvas>
       )}
-      <Suspense fallback={null}>
-        <Bounds fit clip observe margin={0.9}>
-          <RelicModel url={modelPath} scale={scale} />
-        </Bounds>
-        <Environment preset="night" />
-      </Suspense>
-      <OrbitControls
-        makeDefault enableZoom={false} enablePan={false}
-        autoRotate autoRotateSpeed={stageLights ? 0.35 : 1.1}
-        enableDamping dampingFactor={0.04}
-      />
-    </Canvas>
+      {!mounted && (
+        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.2 }}>
+          <div style={{ fontFamily: 'var(--ff-mono)', fontSize: '0.5rem', letterSpacing: '0.2em', color: accentColor }}>LOADING RELIC…</div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -655,8 +688,18 @@ function ArtifactCard({ artifact, idx, onOpen }) {
   const textInitX = noMotion ? 0 : (isLeft ? 38 : -38);
   const baseDelay = idx * 0.03;
 
+  // Media wrapper: tall artifacts get more height
   const mediaWrapStyle = hasModel
-    ? { position: 'relative', width: '100%', aspectRatio: SHAPE_RATIO[artifact.shape] || '4/3', minHeight: '280px', maxHeight: '520px', overflow: 'hidden' }
+    ? {
+        position: 'relative',
+        width: '100%',
+        // 'tall' shape artifacts fill the full column height; others use aspect ratio
+        aspectRatio: artifact.shape === 'tall' ? undefined : (SHAPE_RATIO[artifact.shape] || '4/3'),
+        height: artifact.shape === 'tall' ? 'clamp(480px, 70vh, 700px)' : undefined,
+        minHeight: artifact.shape === 'tall' ? undefined : '280px',
+        maxHeight: artifact.shape === 'tall' ? undefined : '520px',
+        overflow: 'hidden',
+      }
     : { position: 'relative', width: '100%', maxWidth: imgStyle.maxWidth || 'none', margin: imgStyle.maxWidth ? '0 auto' : '0' };
 
   // Purity bar width
@@ -709,7 +752,13 @@ function ArtifactCard({ artifact, idx, onOpen }) {
           {/* Media container */}
           <div style={mediaWrapStyle}>
             {hasModel ? (
-              <RelicViewer modelPath={artifact.model} accentColor={ac} scale={artifact.modelScale} stageLights={lightsOn} />
+              <RelicViewer
+                modelPath={artifact.model}
+                accentColor={ac}
+                scale={artifact.modelScale}
+                stageLights={lightsOn}
+                eager={idx < 2}
+              />
             ) : (
               <>
                 <img
@@ -922,8 +971,6 @@ export default function ArtifactsVault() {
   const [godVisible, setGodVisible] = useState(false);
   const [audioOn, setAudioOn] = useState(false);
   const { addViewedRelic } = useVisitor();
-  const scrollContainerRef = useRef(null);
-  const locoRef = useRef(null);
   const audioRef = useRef(null);
 
   const handleOpenArtifact = useCallback((a) => { setSelected(a); addViewedRelic(a.id); }, [addViewedRelic]);
@@ -955,29 +1002,12 @@ export default function ArtifactsVault() {
     return () => { document.getElementById(id)?.remove(); };
   }, []);
 
-  // locomotive scroll
+  // Remove Locomotive Scroll — it adds a competing rAF loop that fights Three.js
+  // and causes the hang on artifact-heavy pages. Native smooth-scroll handles it fine.
+
+  // Preload all model files eagerly so they're cached before scroll reaches them
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const LS = (await import('locomotive-scroll')).default;
-        if (cancelled || !scrollContainerRef.current) return;
-        locoRef.current = new LS({
-          el: scrollContainerRef.current,
-          smooth: true, smoothMobile: false,
-          multiplier: 0.80, lerp: 0.065,
-          class: 'is-revealed',
-          scrollbarContainer: false,
-        });
-      } catch (e) {
-        if (!cancelled) console.warn('[Xenova] Locomotive unavailable:', e);
-      }
-    })();
-    return () => {
-      cancelled = true;
-      try { locoRef.current?.destroy(); } catch { }
-      locoRef.current = null;
-    };
+    ARTIFACTS.forEach(a => { if (a.model) useGLTF.preload(a.model); });
   }, []);
 
   return (
@@ -987,12 +1017,12 @@ export default function ArtifactsVault() {
       <GlobalPassport />
       <DataTicker />
 
-      {/* Audio toggle — fades in after 1.2s */}
+      {/* Audio toggle — bottom LEFT corner */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, delay: 1.2, ease: EASE_EXPO }}
-        style={{ position: 'fixed', bottom: '3.2rem', right: '2rem', zIndex: 400 }}
+        style={{ position: 'fixed', bottom: '2.8rem', left: '2rem', zIndex: 400 }}
       >
         <motion.button
           onClick={() => setAudioOn(v => !v)}
@@ -1013,7 +1043,7 @@ export default function ArtifactsVault() {
       </motion.div>
 
       {/* Scroll container */}
-      <div ref={scrollContainerRef} data-scroll-container>
+      <div>
         <HeroSection />
 
         {/* Section divider */}
