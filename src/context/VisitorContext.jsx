@@ -6,27 +6,11 @@ const VisitorContext = createContext();
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function VisitorProvider({ children }) {
-    // Load progress from localStorage, or use defaults
-    const getSavedSet = (key, defaultItems = []) => {
-        try {
-            const saved = localStorage.getItem(key);
-            if (saved) return new Set(JSON.parse(saved));
-        } catch (e) {
-            console.warn('Failed to load local storage for', key);
-        }
-        return new Set(defaultItems);
-    };
-
     const [hasPass, setHasPass] = useState(false);
     const [visitorName, setVisitorName] = useState('ANONYMOUS');
-    const [decodedCodexEntries, setDecodedCodexEntries] = useState(() => getSavedSet('xnv_codex_progress'));
-    const [visitedPlanets, setVisitedPlanets] = useState(() => getSavedSet('xnv_planet_progress', [1])); 
-    const [viewedRelics, setViewedRelics] = useState(() => getSavedSet('xnv_relic_progress'));
-
-    // Persist progress changes to localStorage
-    useEffect(() => { localStorage.setItem('xnv_codex_progress', JSON.stringify([...decodedCodexEntries])); }, [decodedCodexEntries]);
-    useEffect(() => { localStorage.setItem('xnv_planet_progress', JSON.stringify([...visitedPlanets])); }, [visitedPlanets]);
-    useEffect(() => { localStorage.setItem('xnv_relic_progress', JSON.stringify([...viewedRelics])); }, [viewedRelics]);
+    const [decodedCodexEntries, setDecodedCodexEntries] = useState(new Set());
+    const [visitedPlanets, setVisitedPlanets] = useState(new Set([1])); 
+    const [viewedRelics, setViewedRelics] = useState(new Set());
 
     // progress trackers
     const addDecodedEntry = (id) => setDecodedCodexEntries(prev => new Set([...prev, id]));
