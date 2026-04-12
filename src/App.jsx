@@ -14,8 +14,6 @@ import ScrollToTop from './components/ScrollToTop'
 
 function App() {
   useEffect(() => {
-    const handleContextMenu = (e) => e.preventDefault();
-    
     const handleKeyDown = (e) => {
       // Prevent F12
       if (e.key === 'F12') {
@@ -39,11 +37,9 @@ function App() {
       }
     };
 
-    document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
