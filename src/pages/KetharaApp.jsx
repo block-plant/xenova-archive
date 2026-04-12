@@ -109,7 +109,14 @@ export default function KetharaApp() {
       
       {/* Ambient Audio Button — bottom-left corner */}
       <button
-        onClick={() => setAudioOn(v => !v)}
+        onClick={() => {
+          if (!audioOn) {
+            if (audioRef.current) audioRef.current.play().catch(console.warn);
+          } else {
+            if (audioRef.current) audioRef.current.pause();
+          }
+          setAudioOn(!audioOn);
+        }}
         style={{
           position: 'fixed',
           bottom: 'clamp(1rem, 4vh, 2.8rem)',

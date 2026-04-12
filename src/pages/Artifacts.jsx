@@ -614,7 +614,8 @@ function LightsButton({ lightsOn, onToggle, ac }) {
   return (
     <motion.button
       className="lights-btn"
-      onClick={onToggle}
+      onPointerDown={(e) => { e.stopPropagation(); onToggle(); }}
+      onClick={(e) => { e.stopPropagation(); onToggle(); }}
       whileTap={{ scale: 0.95 }}
       style={{
         border: `1px solid ${lightsOn ? ac : ac + '3a'}`,
@@ -699,7 +700,7 @@ function ArtifactCard({ artifact, idx, onOpen }) {
         // 'tall' shape artifacts fill the full column height; others use aspect ratio
         aspectRatio: artifact.shape === 'tall' ? undefined : (SHAPE_RATIO[artifact.shape] || '4/3'),
         height: artifact.shape === 'tall' ? 'clamp(480px, 70vh, 700px)' : undefined,
-        minHeight: artifact.shape === 'tall' ? undefined : '280px',
+        minHeight: artifact.shape === 'tall' ? '400px' : '360px',
         maxHeight: artifact.shape === 'tall' ? undefined : '520px',
         overflow: 'hidden',
       }
@@ -1028,7 +1029,14 @@ export default function ArtifactsVault() {
         style={{ position: 'fixed', bottom: '2.8rem', left: '2rem', zIndex: 400 }}
       >
         <motion.button
-          onClick={() => setAudioOn(v => !v)}
+          onClick={() => {
+            if (!audioOn) {
+              if (audioRef.current) audioRef.current.play().catch(console.warn);
+            } else {
+              if (audioRef.current) audioRef.current.pause();
+            }
+            setAudioOn(!audioOn);
+          }}
           whileHover={{ backgroundColor: audioOn ? 'rgba(0,245,212,.1)' : 'rgba(255,255,255,.05)' }}
           whileTap={{ scale: 0.97 }}
           transition={{ duration: 0.24 }}
