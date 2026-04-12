@@ -1043,7 +1043,7 @@ export default function ArtifactsVault() {
       </motion.div>
 
       {/* Scroll container */}
-      <div>
+      <div className="tv-max-w">
         <HeroSection />
 
         {/* Section divider */}

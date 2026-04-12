@@ -69,7 +69,7 @@ export default function KetharaApp() {
       {/* Bottom Status Bar */}
       <div style={{
         position: 'absolute', 
-        bottom: '2rem', 
+        bottom: 'clamp(5rem, 8vh, 6rem)', 
         left: '0',
         width: '100%',
         display: 'flex',
@@ -112,8 +112,8 @@ export default function KetharaApp() {
         onClick={() => setAudioOn(v => !v)}
         style={{
           position: 'fixed',
-          bottom: '2.8rem',
-          left: '2rem',
+          bottom: 'clamp(1rem, 4vh, 2.8rem)',
+          left: 'clamp(1rem, 4vw, 2rem)',
           zIndex: 30,
           background: audioOn ? `rgba(0,136,255,0.12)` : 'rgba(0,0,0,0.45)',
           border: `1px solid ${audioOn ? ACCENT : 'rgba(0,136,255,0.25)'}`,

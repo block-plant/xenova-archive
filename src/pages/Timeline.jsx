@@ -427,6 +427,7 @@ function EraCard({ era, isActive, onSelect, align }) {
     <div
       onClick={() => onSelect(era.id)}
       style={{
+        width: "100%",
         maxWidth: 380,
         cursor: "pointer",
         padding: "20px 24px",
@@ -458,7 +459,7 @@ function EraCard({ era, isActive, onSelect, align }) {
       <div
         style={{
           fontFamily: "'Georgia', serif",
-          fontSize: 22,
+          fontSize: "clamp(1.1rem, 4vw, 22px)",
           fontWeight: 700,
           color: "#E8F4F8",
           letterSpacing: 2,
@@ -576,7 +577,7 @@ function EventPanel({ era, onClose }) {
         right: 0,
         top: 0,
         bottom: 0,
-        width: 420,
+        width: "min(420px, 100vw)",
         background: "linear-gradient(180deg, #060a14 0%, #050810 100%)",
         borderLeft: `1px solid ${era.color}44`,
         zIndex: 200,
@@ -825,7 +826,7 @@ function Header({ navigate }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "0 40px",
+        padding: "0 clamp(1rem, 4vw, 40px)",
       }}
     >
       <button
@@ -1160,9 +1161,11 @@ export default function Timeline() {
 
       {/* Timeline */}
       <div
+        className="tv-max-w"
         style={{
           position: "relative",
           maxWidth: 900,
+          width: "100%",
           margin: "0 auto",
           padding: "40px 20px 120px",
           zIndex: 1,

@@ -473,7 +473,7 @@ function DetailPanel({ entry, isDecoded, onClose }) {
 
       {/* panel */}
       <div style={{
-        width:"min(580px,94vw)",
+        width:"min(580px, 100vw)",
         background:"#060b15",
         borderLeft:`1px solid ${era.color}30`,
         transform: open ? "translateX(0)" : "translateX(100%)",
@@ -750,10 +750,10 @@ export default function Codex() {
       <ParticleCanvas />
       <ScanlineOverlay />
 
-      <div style={{
+      <div className="tv-max-w" style={{
         position:"relative", zIndex:3,
-        maxWidth:1140, margin:"0 auto",
-        padding:"100px 28px 80px",
+        maxWidth:1140, width:"100%", margin:"0 auto",
+        padding:"clamp(4rem, 10vw, 100px) clamp(1rem, 4vw, 28px) 80px",
         opacity: mounted ? 1 : 0,
         transform: mounted ? "none" : "translateY(12px)",
         transition:"opacity 0.7s ease, transform 0.7s ease",

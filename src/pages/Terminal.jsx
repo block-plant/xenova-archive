@@ -59,8 +59,9 @@ const STYLES = `
   .xnv-shell {
     position: relative;
     width: 100%;
+    max-width: 1800px;
+    margin: var(--navbar-height, 64px) auto 0;
     height: calc(100dvh - var(--navbar-height, 64px));
-    margin-top: var(--navbar-height, 64px);
     background: linear-gradient(180deg, #030507 0%, #020406 100%);
     color: #00FFD1;
     font-family: 'Share Tech Mono', 'Courier New', Courier, monospace;
@@ -193,11 +194,12 @@ const STYLES = `
     display: flex;
     flex-direction: column;
     gap: 2px;
-    font-size: 0.93rem;
+    font-size: clamp(0.65rem, 3vw, 0.93rem);
     line-height: 1.6;
     letter-spacing: 0.04em;
     scroll-behavior: smooth;
     scrollbar-width: thin;
+    word-break: break-word;
     scrollbar-color: rgba(0,255,209,0.18) transparent;
   }
   @media (min-width: 768px) {
@@ -279,7 +281,7 @@ const STYLES = `
     outline: none;
     color: #ffffff;
     font-family: 'Share Tech Mono', 'Courier New', Courier, monospace;
-    font-size: 0.93rem;
+    font-size: clamp(0.75rem, 3.5vw, 0.93rem);
     letter-spacing: 0.04em;
     text-shadow: 0 0 4px rgba(255,255,255,0.35);
     caret-color: transparent;
