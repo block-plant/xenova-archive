@@ -84,35 +84,63 @@ function PlanetMesh() {
 
 export default function Planet() {
   return (
-    <div
-      style={{
-        position: 'absolute',
-        right: '-5%',
-        top: '50%',
-        transform: 'translateY(-50%)',
-        width: '780px',
-        height: '780px',
-        zIndex: 1,
-        cursor: 'grab',
-        overflow: 'visible',
-      }}
-    >
-      <Canvas
-        camera={{ position: [0, 1.2, 20], fov: 40 }}
-        gl={{ antialias: true, alpha: true }}
-        style={{ overflow: 'visible' }}
-      >
-        <PlanetMesh />
-        <OrbitControls
-          enableZoom={true}
-          enablePan={false}
-          rotateSpeed={0.45}
-          zoomSpeed={0.5}
-          minDistance={4}
-          maxDistance={12}
-        />
-      </Canvas>
-    </div>
+    <>
+      <style>{`
+        .archive-planet-wrap {
+          position: absolute;
+          top: 50%;
+          right: -5%;
+          transform: translateY(-50%);
+          width: clamp(320px, 55vw, 780px);
+          height: clamp(320px, 55vw, 780px);
+          z-index: 1;
+          cursor: grab;
+          overflow: visible;
+          pointer-events: auto;
+          transition: opacity 0.6s ease;
+        }
+        /* tablet: shrink and shift up so it doesn't overlap text */
+        @media (max-width: 900px) {
+          .archive-planet-wrap {
+            right: 50%;
+            transform: translate(50%, -62%);
+            width: clamp(260px, 70vw, 480px);
+            height: clamp(260px, 70vw, 480px);
+            opacity: 0.55;
+            pointer-events: none;
+          }
+        }
+        /* mobile: pure atmosphere — small, top-centered, very dim */
+        @media (max-width: 600px) {
+          .archive-planet-wrap {
+            width: 240px;
+            height: 240px;
+            opacity: 0.22;
+            top: 8%;
+            right: 50%;
+            transform: translateX(50%);
+            pointer-events: none;
+          }
+        }
+      `}</style>
+      <div className="archive-planet-wrap">
+        <Canvas
+          camera={{ position: [0, 1.2, 20], fov: 40 }}
+          gl={{ antialias: true, alpha: true }}
+          style={{ overflow: 'visible', width: '100%', height: '100%' }}
+        >
+          <PlanetMesh />
+          <OrbitControls
+            enableZoom={true}
+            enablePan={false}
+            rotateSpeed={0.45}
+            zoomSpeed={0.5}
+            minDistance={4}
+            maxDistance={12}
+          />
+        </Canvas>
+      </div>
+    </>
   )
 }
 
