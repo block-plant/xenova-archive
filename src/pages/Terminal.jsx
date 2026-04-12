@@ -592,6 +592,8 @@ export default function Terminal() {
   const [quizQueue, setQuizQueue] = useState([]);
   const [currentQ, setCurrentQ] = useState(null);
   const [quizScore, setQuizScore] = useState({ correct: 0, total: 0 });
+  const [awaitingEmail, setAwaitingEmail] = useState(false);
+  const [lastScore, setLastScore] = useState(null);
   const [bypassDone, setBypassDone] = useState(false);
   const sessionStart = useRef(Date.now());
 
@@ -910,8 +912,22 @@ export default function Terminal() {
           { text: `  OPERATOR: ${rank} [${visitorName}]`, cls: 'xnv-ok' },
           { text: '  SECURITY: LEVEL 5 — NEURAL LINK ACTIVE', cls: 'xnv-ok' },
           { text: '  PROTOCOL: C.O.R.E. v3.0 — ADAPTIVE QUIZ ENGINE ONLINE', cls: 'xnv-ok' },
+          { text: '  NETWORK:  NEURAL ARCHIVE SYNC [ENABLED]', cls: 'xnv-ok' },
           { text: '', cls: '' },
         ], 8);
+        break;
+
+      case 'sync':
+      case 'email':
+        if (quizActive) {
+          pushLine('WARN: Evaluation in progress. Finish session first.', 'xnv-warn');
+          break;
+        }
+        if (!lastScore) {
+          pushLine('ERROR: No recent evaluation data found to synchronize.', 'xnv-err');
+          break;
+        }
+        await startEmailSync();
         break;
 
       case 'begin_evaluation':
@@ -977,17 +993,91 @@ export default function Terminal() {
       score >= 80 ? '▓▓▓  EXEMPLARY PERFORMANCE  ▓▓▓' :
         score >= 50 ? '▓  ACCEPTABLE PERFORMANCE  ▓' :
           '▒  NEURAL SYNC DEGRADED  ▒';
+    setLastScore({ correct, total });
     await typeLines([
       { text: '── EVALUATION COMPLETE ──────────────────────────────────', cls: 'xnv-hdr' },
       { text: `  Score: ${correct} / ${total}  (${score}%)`, cls: 'xnv-ok' },
       { text: '', cls: '' },
       { text: verdict, cls: score >= 80 ? 'xnv-good' : score >= 50 ? 'xnv-warn' : 'xnv-bad' },
       { text: '', cls: '' },
-      { text: '  Your responses have been archived by the Order.', cls: 'xnv-sys' },
+      { text: '  Your responses have been archived locally.', cls: 'xnv-sys' },
+      { text: '  [ TRANSMIT TO NEURAL ARCHIVE? TYPE "SYNC" OR "EMAIL" ]', cls: 'xnv-hdr' },
       { text: '  Type "begin_evaluation" to run another session.', cls: 'xnv-sys' },
       { text: '', cls: '' },
     ], 12);
   }, [typeLines]);
+
+  // start email sync process
+  const startEmailSync = useCallback(async () => {
+    setAwaitingEmail(true);
+    await typeLines([
+      { text: '── NEURAL ARCHIVE SYNCHRONIZATION ───────────────────────', cls: 'xnv-hdr' },
+      { text: '  To receive your encrypted results via neural relay,', cls: 'xnv-ok' },
+      { text: '  please enter your ARCHIVE ADDRESS (Email):', cls: 'xnv-ok' },
+      { text: '', cls: '' },
+    ], 10);
+    setTimeout(() => inputRef.current?.focus(), 100);
+  }, [typeLines]);
+
+  // handle actual transmission
+  const handleEmailTransmission = useCallback(async (email) => {
+    pushLine(`> ${email}`, 'xnv-user');
+    
+    // basic validation
+    if (!email.includes('@') || !email.includes('.')) {
+      triggerGlitch();
+      await typeLines([
+        { text: '  ✘ ERROR: INVALID ADDRESS FORMAT. Access denied.', cls: 'xnv-err' },
+        { text: '  Retrying synchronization protocol...', cls: 'xnv-sys' },
+        { text: '', cls: '' },
+      ], 15);
+      return;
+    }
+
+    setAwaitingEmail(false);
+    setGenerating(true);
+    setFrozen(true);
+
+    await typeLines([
+      { text: '  INITIALIZING QUANTUM TUNNEL...', cls: 'xnv-sys' },
+      { text: '  ENCRYPTING SESSION DATA [AES-2048]...', cls: 'xnv-sys' },
+      { text: `  TARGET: ${email.toUpperCase()}`, cls: 'xnv-ok' },
+    ], 15);
+
+    // progress bar
+    pushLine('  TRANSMITTING: [░░░░░░░░░░░░░░░░░░░░] 0%', 'xnv-sys');
+    const bId = lines.length + 3; // rough estimate
+    const frames = [
+      '  TRANSMITTING: [▓░░░░░░░░░░░░░░░░░░░] 5%',
+      '  TRANSMITTING: [▓▓▓░░░░░░░░░░░░░░░░░] 15%',
+      '  TRANSMITTING: [▓▓▓▓▓▓░░░░░░░░░░░░░░] 30%',
+      '  TRANSMITTING: [▓▓▓▓▓▓▓▓▓░░░░░░░░░░░] 45%',
+      '  TRANSMITTING: [▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░] 60%',
+      '  TRANSMITTING: [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░] 75%',
+      '  TRANSMITTING: [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░] 90%',
+      '  TRANSMITTING: [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓] 100%',
+    ];
+
+    for (const f of frames) {
+      await wait(Math.random() * 400 + 200);
+      setLines(prev => {
+        const next = [...prev];
+        next[next.length - 1] = { ...next[next.length - 1], text: f };
+        return next;
+      });
+    }
+
+    await typeLines([
+      { text: '  ✔ TRANSMISSION SUCCESSFUL.', cls: 'xnv-good' },
+      { text: '  Neural results have been relayed to the Order.', cls: 'xnv-ok' },
+      { text: '  Check your terminal inbox (Email) in 1-2 cycles.', cls: 'xnv-sys' },
+      { text: '', cls: '' },
+    ], 12);
+
+    setGenerating(false);
+    setFrozen(false);
+    setTimeout(() => inputRef.current?.focus(), 100);
+  }, [pushLine, typeLines, triggerGlitch, wait, lines.length]);
 
   // quiz answer handler
   const handleAnswer = useCallback(async (input) => {
@@ -1034,11 +1124,18 @@ export default function Terminal() {
     const raw = inputVal.trim();
     if (!raw || frozen || generating) return;
     setInputVal('');
-    if (quizActive && raw.toLowerCase() === 'skip') await handleSkip();
-    else if (quizActive) await handleAnswer(raw);
-    else await runCommand(raw);
+    
+    if (awaitingEmail) {
+      await handleEmailTransmission(raw);
+    } else if (quizActive && raw.toLowerCase() === 'skip') {
+      await handleSkip();
+    } else if (quizActive) {
+      await handleAnswer(raw);
+    } else {
+      await runCommand(raw);
+    }
     inputRef.current?.focus();
-  }, [inputVal, frozen, generating, quizActive, handleAnswer, handleSkip, runCommand]);
+  }, [inputVal, frozen, generating, quizActive, awaitingEmail, handleEmailTransmission, handleAnswer, handleSkip, runCommand]);
 
   // judge bypass
   const handleBypass = useCallback(async () => {
@@ -1082,8 +1179,9 @@ export default function Terminal() {
   const promptLabel =
     frozen && !booted ? 'BOOTING...' :
       !hasPass && !bypassDone ? 'ACCESS DENIED' :
-        quizActive ? '[EVAL]$' :
-          'root@xenova:~/archive$';
+        awaitingEmail ? '[SYNC]$ ' :
+          quizActive ? '[EVAL]$ ' :
+            'root@xenova:~/archive$ ';
 
   // render
   return (

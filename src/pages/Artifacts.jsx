@@ -899,7 +899,7 @@ const ArtifactCard = React.memo(function ArtifactCard({ artifact, idx, onOpen })
       </motion.div>
     </div>
   );
-}
+});
 
 // HERO
 function HeroSection() {
