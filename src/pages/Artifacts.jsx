@@ -455,6 +455,15 @@ function RelicViewer({ modelPath, accentColor, scale, stageLights, eager = false
     return () => observer.disconnect();
   }, [eager, mounted]);
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const responsiveScale = isMobile ? scale * 0.7 : scale;
+
   return (
     <div ref={wrapRef} style={{ width: '100%', height: '100%' }}>
       {mounted && (
@@ -479,7 +488,7 @@ function RelicViewer({ modelPath, accentColor, scale, stageLights, eager = false
             </>
           )}
           <Suspense fallback={null}>
-            <RelicModel url={modelPath} scale={scale} />
+            <RelicModel url={modelPath} scale={responsiveScale} />
             <Environment preset="night" />
           </Suspense>
           <OrbitControls
@@ -641,7 +650,7 @@ function TimelineConnector({ color }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, amount: 0.5 });
   return (
-    <div ref={ref} style={{ position: 'absolute', bottom: '-3.5rem', left: '50%', transform: 'translateX(-50%)', width: '1px', height: '3.5rem', overflow: 'hidden', pointerEvents: 'none' }}>
+    <div ref={ref} style={{ position: 'absolute', bottom: '-4rem', left: '50%', transform: 'translateX(-50%)', width: '1px', height: '4rem', overflow: 'hidden', pointerEvents: 'none' }}>
       <motion.div
         initial={{ scaleY: 0 }}
         animate={inView ? { scaleY: 1 } : {}}
@@ -652,12 +661,39 @@ function TimelineConnector({ color }) {
   );
 }
 
-// ARTIFACT CARD  — entry animation + parallax + 3D tilt
-function ArtifactCard({ artifact, idx, onOpen }) {
+// STANDALONE GHOST COMPONENT to prevent parent re-renders
+function GodGhost() {
+  const [revealed, setRevealed] = useState(false);
+  return (
+    <>
+      <div
+        onMouseEnter={() => setRevealed(true)}
+        onMouseLeave={() => setRevealed(false)}
+        style={{ position: 'absolute', right: '5%', top: '-8rem', width: '20vw', height: '60vh', zIndex: 0, cursor: 'none' }}
+      />
+      <div className={`god-sil${revealed ? ' god-revealed' : ''}`} style={{
+        position: 'absolute', right: '-8vw', top: '-11rem', width: '45vw', height: '90vh', zIndex: 0, pointerEvents: 'none',
+        background: 'radial-gradient(ellipse at 55% 35%,rgba(0,245,212,1) 0%,rgba(0,100,80,.4) 35%,transparent 65%)',
+        clipPath: 'polygon(50% 0%,58% 15%,72% 8%,65% 28%,88% 22%,75% 42%,95% 52%,75% 62%,84% 82%,62% 72%,55% 95%,47% 72%,28% 85%,35% 62%,8% 70%,22% 48%,4% 36%,30% 28%,18% 10%,42% 16%)',
+      }} />
+    </>
+  );
+}
+
+// ARTIFACT CARD  — memoized to prevent 3D re-init jitter
+const ArtifactCard = React.memo(function ArtifactCard({ artifact, idx, onOpen }) {
   const wrapRef = useRef(null);
   const mediaRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const inView = useInView(wrapRef, { once: true, amount: 0.12 });
-  const noMotion = useReducedMotion();
+  const noMotion = useReducedMotion() || isMobile;
 
   const isLeft = artifact.align === 'left';
   const ac = artifact.accentColor;
@@ -697,10 +733,9 @@ function ArtifactCard({ artifact, idx, onOpen }) {
     ? {
         position: 'relative',
         width: '100%',
-        // 'tall' shape artifacts fill the full column height; others use aspect ratio
         aspectRatio: artifact.shape === 'tall' ? undefined : (SHAPE_RATIO[artifact.shape] || '4/3'),
-        height: artifact.shape === 'tall' ? 'clamp(480px, 70vh, 700px)' : undefined,
-        minHeight: artifact.shape === 'tall' ? '400px' : '360px',
+        height: artifact.shape === 'tall' ? (isMobile ? '420px' : 'clamp(480px, 70vh, 700px)') : undefined,
+        minHeight: artifact.shape === 'tall' ? (isMobile ? '320px' : '400px') : (isMobile ? '300px' : '360px'),
         maxHeight: artifact.shape === 'tall' ? undefined : '520px',
         overflow: 'hidden',
       }
@@ -972,7 +1007,6 @@ function DataTicker() {
 // ROOT PAGE
 export default function ArtifactsVault() {
   const [selected, setSelected] = useState(null);
-  const [godVisible, setGodVisible] = useState(false);
   const [audioOn, setAudioOn] = useState(false);
   const { addViewedRelic } = useVisitor();
   const audioRef = useRef(null);
@@ -1078,21 +1112,8 @@ export default function ArtifactsVault() {
             <div key={art.id} style={{ position: 'relative' }}>
               {i < ARTIFACTS.length - 1 && <TimelineConnector color={art.accentColor} />}
 
-              {/* God silhouette */}
-              {art.id === 'last-breath' && (
-                <>
-                  <div
-                    onMouseEnter={() => setGodVisible(true)}
-                    onMouseLeave={() => setGodVisible(false)}
-                    style={{ position: 'absolute', right: '5%', top: '-15vh', width: '20vw', height: '60vh', zIndex: 0, cursor: 'none' }}
-                  />
-                  <div className={`god-sil${godVisible ? ' god-revealed' : ''}`} style={{
-                    position: 'absolute', right: '-8vw', top: '-20vh', width: '45vw', height: '90vh', zIndex: 0, pointerEvents: 'none',
-                    background: 'radial-gradient(ellipse at 55% 35%,rgba(0,245,212,1) 0%,rgba(0,100,80,.4) 35%,transparent 65%)',
-                    clipPath: 'polygon(50% 0%,58% 15%,72% 8%,65% 28%,88% 22%,75% 42%,95% 52%,75% 62%,84% 82%,62% 72%,55% 95%,47% 72%,28% 85%,35% 62%,8% 70%,22% 48%,4% 36%,30% 28%,18% 10%,42% 16%)',
-                  }} />
-                </>
-              )}
+              {/* God silhouette — standalone logic */}
+              {art.id === 'last-breath' && <GodGhost />}
 
               <ArtifactCard artifact={art} idx={i} onOpen={handleOpenArtifact} />
             </div>

@@ -28,7 +28,7 @@ function NavBar() {
     top: 'var(--navbar-height)',
     left: 0,
     right: 0,
-    background: 'rgba(5, 8, 16, 0.95)',
+    background: '#05121b',
     backdropFilter: 'blur(12px)',
     borderBottom: '1px solid rgba(0, 255, 209, 0.1)',
     display: isMobileMenuOpen ? 'flex' : 'none',

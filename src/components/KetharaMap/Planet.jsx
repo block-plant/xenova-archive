@@ -98,7 +98,13 @@ export default function Planet({ data, selected, onClick }) {
       <Html 
         position={[0, data.size + 0.5, 0]} 
         center 
-        style={{ transition: 'all 0.3s', opacity: selected ? 0 : 0.6, pointerEvents: 'none' }}
+        zIndexRange={[1, 1]}
+        style={{ 
+          transition: 'all 0.3s', 
+          opacity: selected ? 0 : 0.6, 
+          pointerEvents: 'none',
+          visibility: selected ? 'hidden' : 'visible'
+        }}
       >
         <div style={{
           color: 'var(--text-primary)',
@@ -113,7 +119,7 @@ export default function Planet({ data, selected, onClick }) {
       </Html>
 
       {/* Glassmorphic Info Card (Visible when selected) */}
-      <Html position={[data.size * 1.5, data.size, 0]} zIndexRange={[100, 0]}>
+      <Html position={[data.size * 1.5, data.size, 0]} zIndexRange={[100, 100]}>
         <AnimatePresence>
           {selected && (
             <motion.div
