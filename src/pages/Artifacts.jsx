@@ -253,17 +253,20 @@ const GLOBAL_STYLES = `
 
   /* lights button */
   .lights-btn {
-    position: absolute; bottom: 1rem; right: 1rem; z-index: 10;
-    border-radius: 2px; padding: .42rem .85rem;
-    font-family: var(--ff-mono); font-size: .46rem; letter-spacing: .12em;
-    cursor: pointer; backdrop-filter: blur(12px);
-    display: flex; align-items: center; gap: 7px;
+    position: absolute; bottom: 1rem; right: 1rem; z-index: 50;
+    border-radius: 4px; padding: .42rem .85rem;
+    font-family: var(--ff-mono); font-size: .52rem; letter-spacing: .12em;
+    cursor: pointer !important; backdrop-filter: blur(12px);
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    pointer-events: auto !important;
     transition:
       background   0.42s cubic-bezier(0.16,1,0.3,1),
       border-color 0.42s cubic-bezier(0.16,1,0.3,1),
       color        0.42s cubic-bezier(0.16,1,0.3,1),
-      box-shadow   0.42s cubic-bezier(0.16,1,0.3,1);
+      box-shadow   0.42s cubic-bezier(0.16,1,0.3,1),
+      transform    0.2s ease;
   }
+  .lights-btn:active { transform: scale(0.95); }
   .lights-dot { width: 7px; height: 7px; border-radius: 50%; transition: background 0.42s ease, box-shadow 0.42s ease; }
 
   /* responsive grids */

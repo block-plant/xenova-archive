@@ -575,7 +575,7 @@ function EventPanel({ era, onClose }) {
     : {
         position: "fixed",
         right: 0,
-        top: 0,
+        top: 64,
         bottom: 0,
         width: "min(420px, 100vw)",
         background: "linear-gradient(180deg, #060a14 0%, #050810 100%)",

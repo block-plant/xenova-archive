@@ -58,24 +58,28 @@ input, textarea {
 
 /* ── Touch-action: allow natural scroll on mobile ── */
 html, body {
-  touch-action: pan-y;
   overflow-x: hidden;
   width: 100%;
 }
 
 /* ── Mobile Touch Targets ── */
-/* Ensure all interactive targets have a minimum acceptable physical footprint for thumbs */
-button,
-a,
-[role="button"],
-input,
-select,
-textarea {
+/* Ensure native buttons scale cleanly without enforcing inline-flex globally */
+input, select, textarea {
   min-height: 44px;
-  min-width: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+}
+
+/* ── Custom Tailwind Polyfills for Navbar ── */
+.hidden { display: none !important; }
+.lg\:hidden { display: none !important; }
+.lg\:flex { display: flex !important; }
+
+@media (max-width: 1023px) {
+  .lg\:flex { display: none !important; }
+  .lg\:hidden { display: block !important; }
+}
+
+@media (min-width: 1024px) {
+  .lg\:hidden { display: none !important; }
 }
 
 /* ── Global Layout Clamp (TVs & Ultra-wide) ── */

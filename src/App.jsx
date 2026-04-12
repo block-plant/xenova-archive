@@ -16,23 +16,23 @@ function App() {
   useEffect(() => {
     const handleKeyDown = (e) => {
       // Prevent F12
-      if (e.key === 'F12') {
+      if(e.key === 'F12'){
         e.preventDefault();
       }
       // Prevent Ctrl+Shift+I / Cmd+Option+I - Inspect
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'i') {
+      if((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'i'){
         e.preventDefault();
       }
       // Prevent Ctrl+Shift+C / Cmd+Option+C - Inspect Element
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'c') {
+      if((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'c'){
         e.preventDefault();
       }
       // Prevent Ctrl+Shift+J / Cmd+Option+J - Console
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'j') {
+      if((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'j'){
         e.preventDefault();
       }
       // Prevent Ctrl+U / Cmd+Option+U - View Source
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
+      if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u'){
         e.preventDefault();
       }
     };
