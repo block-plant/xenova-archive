@@ -22,16 +22,25 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-*.md
 
 # AI / Agent Configuration Files
-.claude
+.claude/
 .windsurfrules
 .cursorrules
 .cursorignore
+.cursor/
+.windsurf/
 .cline_memory/
 cline_docs/
 .roo/
 .gemini
 .geminiignore
 .antigravityignore
+.mcp.json
+.code-review-graph/
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+instructions.md
+prompt_*.md
+*.instructions.md
